@@ -57,3 +57,15 @@ export type TUser = {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 };
+
+export type TCreateUserData = Pick<TUser, 'name' | 'email' | 'dateOfBirth' | 'campus'> & {
+  password: string;
+  subscription?: {
+    tier: 'basic' | 'pro';
+  };
+  profile?: {
+    instruments: string[];
+    genres: string[];
+    skillLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  };
+};

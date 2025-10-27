@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import {
   Button,
   Checkbox,
@@ -12,31 +12,21 @@ import {
   Space,
   Typography,
   message,
-} from "antd";
+} from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
+import { userService } from '../../services/user.service';
+import { TCreateUserData } from '../../types';
+import { Moment } from 'moment';
 
 const { Text } = Typography;
 
 const INSTRUMENTS = [
-  "Guitar",
-  "Bass",
-  "Drums",
-  "Piano/Keys",
-  "Vocals",
-  "Violin",
-  "Saxophone",
-  "Trumpet",
+  "Guitar", "Bass", "Drums", "Piano/Keys", "Vocals", "Violin", "Saxophone", "Trumpet",
 ];
 
 const GENRES = [
-  "Rock",
-  "Jazz",
-  "Pop",
-  "Hip-Hop",
-  "Classical",
-  "Metal",
-  "Blues",
-  "EDM",
-  "Country",
+  "Rock", "Jazz", "Pop", "Hip-Hop", "Classical", "Metal", "Blues", "EDM", "Country",
 ];
 
 const PASSWORD_RULE =
@@ -48,15 +38,74 @@ function isUnderAgeLimit(date: Date, minYears = 13): boolean {
   return date > cutoff;
 }
 
+// Define the shape of the form values for clarity
+interface SignUpFormValues {
+  name: string;
+  email: string;
+  password: string;
+  dateOfBirth: Moment; // AntD DatePicker uses Moment.js objects
+  subscriptionTier: 'basic' | 'pro';
+  instruments: string[];
+  genres: string[];
+  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+  acceptTerms: boolean;
+}
+
 const SignUpForm: React.FC = () => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const onFinish = () => {
-    // Show AntD success message
-    message.success("Account created successfully!");
+  /**
+   * Handles form submission, calls the user service, and manages responses.
+   */
+  const onFinish = async (values: SignUpFormValues) => {
+    setLoading(true);
 
-    // Reset all form fields
-    form.resetFields();
+    // --- THIS IS THE UPDATED LOGIC ---
+    // Now we map ALL form fields to the TCreateUserData structure
+    const userData: TCreateUserData = {
+      // Core fields
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      dateOfBirth: values.dateOfBirth.toISOString(),
+
+      // Nested subscription object
+      subscription: {
+        tier: values.subscriptionTier,
+      },
+
+      // Nested profile object
+      profile: {
+        instruments: values.instruments,
+        genres: values.genres,
+        skillLevel: values.skillLevel,
+      },
+    };
+    // --- END OF UPDATED LOGIC ---
+
+    try {
+      await userService.createUser(userData);
+
+      // Handle success
+      message.success('Account created successfully! Please log in.');
+      navigate('/login'); // Redirect to login page
+
+    } catch (error) {
+      // Handle errors
+      let errorMessage = 'Failed to create account.';
+      if (isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      message.error(errorMessage);
+    } finally {
+      setLoading(false); // Stop the loading spinner
+    }
   };
 
   return (
@@ -65,12 +114,15 @@ const SignUpForm: React.FC = () => {
       form={form}
       name="signup"
       onFinish={onFinish}
-      onFinishFailed={() => {}}
+      onFinishFailed={() => {
+        message.error('Please correct the errors in the form.');
+      }}
       scrollToFirstError
       requiredMark="optional"
       initialValues={{ subscriptionTier: "basic" }}
     >
       <Row gutter={[16, 0]}>
+        {/* --- All your form items are unchanged --- */}
         <Col xs={24} md={12}>
           <Form.Item
             label="Full Name"
@@ -150,7 +202,7 @@ const SignUpForm: React.FC = () => {
             />
           </Form.Item>
         </Col>
-
+        
         <Col xs={24} md={12}>
           <Form.Item
             label="Subscription Tier"
@@ -244,7 +296,11 @@ const SignUpForm: React.FC = () => {
           <Button htmlType="button" onClick={() => form.resetFields()}>
             Reset
           </Button>
-          <Button type="primary" htmlType="submit">
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+          >
             Create Account
           </Button>
         </Space>
