@@ -95,7 +95,7 @@ const Login: React.FC = () => {
 
       // Show success and redirect
       message.success('Login successful! Welcome.');
-      navigate('/dashboard'); // Or '/sessions', '/profile', etc. // TODO: choose default page after login.
+      navigate('/sessions'); // Or '/sessions', '/profile', etc. // TODO: choose default page after login.
 
     } catch (error) {
       // Show the error message from the service
