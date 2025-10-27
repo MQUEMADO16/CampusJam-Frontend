@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
 
+import SignUp from './pages/SignUp';
+
 const { Content } = Layout;
 
 function App() {
@@ -26,7 +28,7 @@ function App() {
               />
               <Route
                 path="/signup"
-                element={<div>Sign Up Page</div>}
+                element={<SignUp />}
               />
 
               {/* --- Core App & Session Pages --- */}
