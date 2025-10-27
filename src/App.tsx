@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
+import Login from './pages/Login';
 
 import SignUp from './pages/SignUp';
 
 const { Content } = Layout;
+
 
 function App() {
   return (
@@ -24,7 +26,7 @@ function App() {
               />
               <Route
                 path="/login"
-                element={<div>Login Page</div>}
+                element={<Login/>}
               />
               <Route
                 path="/signup"
