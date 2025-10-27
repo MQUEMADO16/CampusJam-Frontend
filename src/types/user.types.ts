@@ -57,3 +57,8 @@ export type TUser = {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 };
+
+export type TCreateUserData = Pick<TUser, 'name' | 'email' | 'dateOfBirth'> & {
+  password: string;
+  campus?: string;
+};
