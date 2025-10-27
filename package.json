@@ -16,6 +16,7 @@
     "antd": "^5.27.4",
     "axios": "^1.12.2",
     "emotion": "^11.0.0",
+    "moment": "^2.30.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.4",
