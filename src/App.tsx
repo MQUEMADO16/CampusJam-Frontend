@@ -4,6 +4,7 @@ import { Layout } from 'antd';
 import Login from './pages/Login';
 
 import SignUp from './pages/SignUp';
+import Splash from './pages/Splash';
 
 const { Content } = Layout;
 
@@ -22,7 +23,7 @@ function App() {
               {/* --- Authentication & Public Pages --- */}
               <Route
                 path="/"
-                element={<div>Landing Page (Public Homepage)</div>}
+                element={<Splash/>}
               />
               <Route
                 path="/login"
