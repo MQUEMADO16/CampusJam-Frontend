@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Col, Row, Typography, Divider } from "antd";
-import SignUpForm from "../components/features/SignUpForm";
+import SignUpForm from "../../components/features/SignUpForm";
 
 const { Title, Text } = Typography;
 
