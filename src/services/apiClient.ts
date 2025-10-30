@@ -4,7 +4,7 @@ import axios from 'axios';
 import { TUser, TSession, TMessage, TReport } from '../types';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api', // Your backend base URL // TODO: add this to .env when we figure out hosting the backend
+  baseURL: process.env.REACT_APP_CAMPUS_JAM_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
