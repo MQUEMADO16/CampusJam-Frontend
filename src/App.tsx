@@ -1,92 +1,70 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Layout } from 'antd';
+
+import MainLayout from './components/layout/MainLayout';
 
 import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import UserProfile from './pages/profile/UserProfile';
-
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
-
-const { Content } = Layout;
-
 
 function App() {
   return (
     <BrowserRouter>
-      <Layout style={{ minHeight: '100vh' }}>
-        {/* Navbar Here */}
+      {/* The <Layout> component is removed from here */}
+      <Routes>
+        {/* --- Group 1: Routes WITHOUT Navbar --- */}
+        {/* These render standalone without the MainLayout wrapper */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/access-denied" element={<AccessDenied />} />
 
-        <Content style={{ padding: '0 48px', marginTop: 64 }}>
-          <div style={{ background: '#fff', padding: 24, minHeight: 380 }}> {/* Style parent page attributes here */}
-            <Routes>
+        {/* --- Group 2: Routes WITH Navbar --- */}
+        {/* This <Route> uses MainLayout as its element.
+            All child routes will render inside MainLayout's <Outlet /> */}
+        <Route path="/" element={<MainLayout />}>
+          {/* path="/" is now the 'index' of this group */}
+          <Route
+            index
+            element={<div>Landing Page (Public Homepage)</div>}
+          />
 
-              {/* Route pages here. Add relevant pages to the 'element' attribute as they are made. */}
-              {/* --- Authentication & Public Pages --- */}
-              <Route
-                path="/"
-                element={<div>Landing Page (Public Homepage)</div>}
-              />
-              <Route
-                path="/login"
-                element={<Login />}
-              />
-              <Route
-                path="/signup"
-                element={<SignUp />}
-              />
+          {/* Core App & Session Pages */}
+          {/* Note: no leading "/" on these paths */}
+          <Route
+            path="sessions"
+            element={<div>Jam Board Page (List of all public sessions)</div>}
+          />
+          <Route
+            path="sessions/:sessionId"
+            element={<div>Session Detail Page (for a single session)</div>}
+          />
+          <Route
+            path="create-session"
+            element={<div>Create Session Page (Form)</div>}
+          />
+          <Route
+            path="sessions/:sessionId/edit"
+            element={<div>Edit Session Page (Form)</div>}
+          />
 
-              {/* --- Core App & Session Pages --- */}
-              <Route
-                path="/sessions"
-                element={<div>Jam Board Page (List of all public sessions)</div>}
-              />
-              <Route
-                path="/sessions/:sessionId"
-                element={<div>Session Detail Page (for a single session)</div>}
-              />
-              <Route
-                path="/create-session"
-                element={<div>Create Session Page (Form)</div>}
-              />
-              <Route
-                path="/sessions/:sessionId/edit"
-                element={<div>Edit Session Page (Form)</div>}
-              />
+          {/* User & Profile Pages */}
+          <Route path="profile/:userId" element={<UserProfile />} />
+          <Route
+            path="settings/profile"
+            element={<div>User Settings Page (Private view for editing)</div>}
+          />
+          <Route
+            path="my-sessions"
+            element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
+          />
+        </Route>
 
-              {/* --- User & Profile Pages --- */}
-              <Route
-                path="/profile/:userId"
-                element={<UserProfile />}
-              />
-              <Route
-                path="/settings/profile"
-                element={<div>User Settings Page (Private view for editing)</div>}
-              />
-              <Route
-                path="/my-sessions"
-                element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
-              />
-
-              {/* --- Catch-all 404 Page --- */}
-              <Route
-                path="*"
-                element={<NotFound />}
-              />
-
-              {/* --- Catch-all 403 Page --- */}
-              <Route
-                path="access-denied"
-                element={<AccessDenied />}
-              />
-
-            </Routes>
-          </div>
-        </Content>
-
-        {/* Footer here */}
-      </Layout>
+        {/* --- Catch-all 404 Page (must be at the end) --- */}
+        <Route path="*" element={<NotFound />} />
+        
+      </Routes>
     </BrowserRouter>
   );
 }

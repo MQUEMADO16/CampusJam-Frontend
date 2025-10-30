@@ -49,7 +49,7 @@ const GradientButton = styled(Button)`
   height: 45px;
   font-size: 16px;
   font-weight: bold;
-  background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+  background: linear-gradient(45deg, #d10a50 0%, #402579 100%);
   border: none;
   box-shadow: 0 4px 15px rgba(0, 118, 255, 0.3);
 
