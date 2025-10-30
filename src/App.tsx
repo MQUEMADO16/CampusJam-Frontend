@@ -1,9 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from 'antd';
-import Login from './pages/Login';
 
-import SignUp from './pages/SignUp';
+import Login from './pages/auth/Login';
+import SignUp from './pages/auth/SignUp';
+import UserProfile from './pages/profile/UserProfile';
+
+import NotFound from './pages/NotFound';
+import AccessDenied from './pages/AccessDenied';
 
 const { Content } = Layout;
 
@@ -26,7 +30,7 @@ function App() {
               />
               <Route
                 path="/login"
-                element={<Login/>}
+                element={<Login />}
               />
               <Route
                 path="/signup"
@@ -54,7 +58,7 @@ function App() {
               {/* --- User & Profile Pages --- */}
               <Route
                 path="/profile/:userId"
-                element={<div>User Profile Page (Public view)</div>}
+                element={<UserProfile />}
               />
               <Route
                 path="/settings/profile"
@@ -68,7 +72,13 @@ function App() {
               {/* --- Catch-all 404 Page --- */}
               <Route
                 path="*"
-                element={<div>404 Not Found</div>}
+                element={<NotFound />}
+              />
+
+              {/* --- Catch-all 403 Page --- */}
+              <Route
+                path="access-denied"
+                element={<AccessDenied />}
               />
 
             </Routes>

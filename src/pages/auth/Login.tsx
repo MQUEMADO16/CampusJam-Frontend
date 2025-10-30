@@ -5,8 +5,8 @@ import { keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useNavigate, Link } from 'react-router-dom';
 
-import AuthService from '../services/auth.service';
-import { useAuth } from '../context/auth.context';
+import AuthService from '../../services/auth.service';
+import { useAuth } from '../../context/auth.context';
 
 // TODO: clean up the css styling, might want to move this to a separate location
 
