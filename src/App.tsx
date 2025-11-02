@@ -8,6 +8,7 @@ import UserProfile from './pages/profile/UserProfile';
 
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
+import Footer from './components/layout/Footer';
 
 const { Content } = Layout;
 
@@ -86,6 +87,7 @@ function App() {
         </Content>
 
         {/* Footer here */}
+        <Footer />
       </Layout>
     </BrowserRouter>
   );
