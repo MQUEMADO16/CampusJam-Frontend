@@ -1,11 +1,11 @@
 .footer {
-  background-color: #111827; /* bg-gray-900 */
-  color: white;
+  background-color: #fff; /* bg-gray-900 */
+  color: #111827;
   
   /* MORE VERTICAL PADDING */
   padding-top: 0rem;    
   padding-bottom: 0%; 
-  
+  width: 98.8%;
   font-size: 1.5rem; 
 }
 
@@ -14,8 +14,8 @@
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+  padding-left: 0rem;
+  padding-right: 0rem;
   
   /* This is for mobile (stacked) */
   display: grid;
@@ -24,22 +24,22 @@
   text-align: center;
 }
 
-/* === THIS IS THE KEY CHANGE FOR SPREADING OUT === */
+
 @media (min-width: 800px) {
   .container {
-    /* Switch to flexbox for better distribution */
+    
     display: flex;
     flex-direction: row;
     
-    /* This spreads your 3 columns out evenly */
+    
     justify-content: space-around; 
     
     align-items: flex-start; /* Aligns them to the top */
     text-align: left; /* Keep text left-aligned within each column */
     
-    /* More side padding on desktop */
-    padding-left: .1rem;
-    padding-right: .1rem;
+    
+    padding-left: 0rem;
+    padding-right: 0rem;
     
     
   }
@@ -52,7 +52,7 @@
 }
 
 .text {
-  color: #9ca3af; 
+  color: #111827; 
   margin-bottom: 1rem; 
   font-size: 2rem; 
 }
@@ -64,7 +64,7 @@
   font-size: 3rem; 
 }
 
-/* sm:justify-start */
+
 @media (min-width: 640px) {
   .socialIcons {
     justify-content: flex-start;
@@ -72,7 +72,7 @@
 }
 
 .iconLink {
-  color: rgb(255, 255, 255); 
+  color: rgb(0, 0, 0); 
   transition: color 0.2s ease-in-out; 
 }
 
@@ -87,7 +87,7 @@
 }
 
 .list {
-  color: #9ca3af; 
+  color: #000000; 
   list-style: none;
   padding: 0;
   margin: 1rem 0 0 0;
@@ -101,24 +101,24 @@
 }
 
 .list li a {
-  color: #9ca3af; 
+  color: #111827; 
   text-decoration: none; 
   transition: color 0.2s ease-in-out;
 }
 
 .list li a:hover {
-  color: white; 
+  color: #db2777; 
   text-decoration: underline; 
 }
 
 .bottomBar {
   background-image: linear-gradient(to right, #db2777, #7e22ce);
-  margin-top: 1rem; 
-  
-  /* MORE PADDING & BIGGER TEXT */
+  margin-top: .5rem; 
+
   padding-top:1.5rem;   
   padding-bottom: 1.5rem; 
   text-align: center;
   font-size: 3.5rem;  
   font-weight: 600; 
+  color: white;
 }
