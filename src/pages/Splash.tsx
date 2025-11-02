@@ -9,7 +9,7 @@ const Splash: React.FC = () => {
       <div
         className="relative flex flex-col justify-center items-center text-center px-4 py-24"
         style={{
-          backgroundImage:    // TODO: Replace with correct image
+          backgroundImage:    // TODO: Replace with correct image, this is a temp
             "url('https://media.gettyimages.com/id/1413427894/photo/teenage-friends-singing-and-playing-guitar-during-band-practice-in-garage.jpg?s=612x612&w=gi&k=20&c=NAoliR3c7azAZbFHXmdb_F_0uNUhHN8oVVRa89dF71w=')",
           backgroundSize: "cover",
           backgroundPosition: "center",
