@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { App as AntApp } from 'antd';
 import App from './App';
 import './index.css';
+
 import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './context/auth.context';
 
@@ -10,9 +12,11 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <AntApp>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </AntApp>
   </React.StrictMode>
 );
 
