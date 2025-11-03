@@ -8,6 +8,7 @@ import SignUp from './pages/auth/SignUp';
 import UserProfile from './pages/profile/UserProfile';
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
+import PricingPage from './pages/Pricing/Pricing';
 
 function App() {
   return (
@@ -29,6 +30,9 @@ function App() {
             index
             element={<div>Landing Page (Public Homepage)</div>}
           />
+          {/*ROUTE FOR PRICING */}
+          <Route 
+            path="pricing" element={<PricingPage />} />
 
           {/* Core App & Session Pages */}
           {/* Note: no leading "/" on these paths */}
