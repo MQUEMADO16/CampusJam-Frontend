@@ -11,6 +11,10 @@ import AccessDenied from './pages/AccessDenied';
 import UserProfileSettings from './pages/profile/UserProfileSettings';
 import PricingPage from './pages/Pricing/Pricing';
 import SessionDetail from './pages/sessions/SessionDetail';
+import AboutPage from './pages/AboutUs/AboutPage';
+import ContactUs from './pages/ContactUs/ContactPage';
+// import JamBoardPage from './pages/JamBoard/JamBoard';
+
 
 function App() {
   return (
@@ -34,6 +38,16 @@ function App() {
           {/*ROUTE FOR PRICING */}
           <Route 
             path="pricing" element={<PricingPage />} />
+
+          <Route 
+            path="about" element={<AboutPage />} />
+          
+          <Route 
+            path="contact" element={<ContactUs />} />
+          
+  
+
+      
 
           {/* Core App & Session Pages */}
           {/* Note: no leading "/" on these paths */}
