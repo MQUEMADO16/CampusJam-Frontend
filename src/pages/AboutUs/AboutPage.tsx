@@ -1,8 +1,5 @@
 import React from 'react';
-// 1. We use your existing logo import
 import campusJamLogo from '../../assets/campusJamLogo.png'; 
-
-// 2. Added Avatar and Space for layout
 import { Row, Col, Typography, Avatar, Space } from 'antd'; 
 
 const { Title, Paragraph } = Typography;

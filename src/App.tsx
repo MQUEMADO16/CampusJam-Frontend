@@ -45,7 +45,7 @@ function App() {
           <Route 
             path="contact" element={<ContactUs />} />
           
-          {/* <Route path="jam-board" element={<JamBoardPage />} /> */}
+  
 
       
 

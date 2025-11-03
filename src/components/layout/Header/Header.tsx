@@ -1,18 +1,172 @@
-import React from 'react';
-import { Layout, Menu, Button, Space, Typography } from 'antd';
+import React, { useState } from 'react'; // 1. Import useState
+import {
+  Layout,
+  Menu,
+  Button,
+  Space,
+  Typography,
+  ConfigProvider,
+  Dropdown,
+  Avatar,
+  Spin,
+  Card,
+  Divider,
+} from 'antd';
+import {
+  UserOutlined,
+  LogoutOutlined,
+  ProfileOutlined,
+  SettingOutlined, // For Settings & Privacy
+  QuestionCircleOutlined, // For Help & Support
+  BulbOutlined, // For Display & Accessibility (or another appropriate icon)
+  RightOutlined, // For the arrow icon on menu items
+} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import campusJamLogo from '../../../assets/campusJamLogo.png'; 
+
+import { useAuth } from '../../../context/auth.context';
+
+import logoSrc from '../../../assets/images/campus-jam-logo.png';
 
 const { Header } = Layout;
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+const ACTIVE_COLOR = '#D10A50';
 
 const AppHeader: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isLoading, logout } = useAuth();
+  
+  // Add state to control the dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/'); // Navigate to home after logout
+    setIsDropdownOpen(false); // Close dropdown
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate(`/profile/${user._id}`);
+    }
+    setIsDropdownOpen(false); // Close dropdown
+  };
 
   // This handles navigation for both Menu and Buttons
   const handleNavigate = (path: string) => {
     navigate(path);
   };
+
+  // Placeholder for future navigation
+  const handleSettingsClick = () => {
+    navigate('/settings/account'); // Example path
+    setIsDropdownOpen(false); // Close dropdown
+  };
+
+  const handleHelpClick = () => {
+    navigate('/help'); // Example path
+    setIsDropdownOpen(false); // Close dropdown
+  };
+
+  const handleDisplayClick = () => {
+    navigate('/display-settings'); // Example path
+    setIsDropdownOpen(false); // Close dropdown
+  };
+
+  const userDropdownOverlay = (
+    <Card
+      style={{
+        width: 280, // Fixed width for the card
+        borderRadius: 8,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        padding: '0', // Remove default card padding if internal elements manage it
+      }}
+      bodyStyle={{ padding: '0' }} // Remove body padding too
+    >
+      {/* User Info Header */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '16px',
+          paddingBottom: '12px',
+        }}
+      >
+        <Avatar size={48} icon={<UserOutlined />} />
+        <Text strong style={{ marginLeft: '12px', fontSize: '1Grem' }}>
+          {user?.name}
+        </Text>
+      </div>
+
+      {/* Edit Profile Button (matches image) */}
+      <div style={{ padding: '0 16px 16px 16px' }}>
+        <Button
+          type="default"
+          onClick={handleProfileClick}
+          icon={<ProfileOutlined />}
+          style={{ width: '100%', textAlign: 'left', borderRadius: 6 }}
+        >
+          Edit Profile
+        </Button>
+      </div>
+
+      <Divider style={{ margin: '0 0 8px 0' }} /> {/* Separator */}
+
+      {/* Menu Items */}
+      <Space
+        direction="vertical"
+        style={{ width: '100%', padding: '0 0 8px 0' }}
+        size={0}
+      >
+        {[
+          {
+            key: 'settings',
+            label: 'Settings & Privacy',
+            icon: <SettingOutlined />,
+            onClick: handleSettingsClick,
+          },
+          {
+            key: 'help',
+            label: 'Help & Support',
+            icon: <QuestionCircleOutlined />,
+            onClick: handleHelpClick,
+          },
+          {
+            key: 'display',
+            label: 'Display & Accessibility',
+            icon: <BulbOutlined />,
+            onClick: handleDisplayClick,
+          },
+          {
+            key: 'logout',
+            label: 'Log Out',
+            icon: <LogoutOutlined />,
+            onClick: handleLogout,
+          },
+        ].map((item) => (
+          <div
+            key={item.key}
+            onClick={item.onClick}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '10px 16px',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s',
+            }}
+          >
+            <span style={{ marginRight: '12px', fontSize: '1rem' }}>
+              {item.icon}
+            </span>
+            <Text style={{ flexGrow: 1, fontSize: '0.9rem' }}>
+              {item.label}
+            </Text>
+            <RightOutlined style={{ fontSize: '0.8rem', color: '#ccc' }} />
+          </div>
+        ))}
+      </Space>
+    </Card>
+  );
 
   return (
     <Header
@@ -25,21 +179,23 @@ const AppHeader: React.FC = () => {
         position: 'fixed', // Makes it stick to the top
         width: '100%',
         zIndex: 10,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
       }}
     >
       {/* Logo Section */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-
-        <img 
-          src={campusJamLogo} 
-          alt="CampusJam Logo" 
-          style={{ height: '50px', marginRight: '1px' }} // You can adjust the height
-        />
+        <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>
+          <img
+            src={logoSrc}
+            alt="CampusJam Logo"
+            style={{ height: '32px', marginLeft: '8px', marginTop: '24px' }}
+          />
+        </span>
         <Title
           level={4}
-          style={{ 
+          style={{
             margin: 0,
-            background: 'linear-gradient(to right, #ec4899, #8b5cf6)',
+            background: 'linear-gradient(to right, #D10A50, #402579)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
@@ -48,36 +204,78 @@ const AppHeader: React.FC = () => {
         </Title>
       </Link>
 
-      {/* Navigation Menu */}
-      <Menu
-        mode="horizontal"
-        onClick={({ key }) => handleNavigate(key)}
-        style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
-        items={[
-          { key: '/', label: 'Home' },
-          { key: '/about', label: 'About' },
-          { key: '/contact', label: 'Contact' },
-          { key: '/pricing', label: 'Pricing' },
-          { key: '/sessions', label: 'Jam Board'},
-          
-
-
-        ]}
-      />
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: ACTIVE_COLOR,
+          },
+          components: {
+            Menu: {
+              itemSelectedColor: ACTIVE_COLOR,
+              itemHoverColor: ACTIVE_COLOR,
+              fontSize: 18,
+              itemPaddingInline: 24,
+            },
+          },
+        }}
+      >
+        {/* Navigation Menu */}
+        <Menu
+          mode="horizontal"
+          onClick={({ key }) => handleNavigate(key)}
+          style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
+          items={[
+            { key: '/', label: 'Home' },
+            { key: '/about', label: 'About' },
+            { key: '/contact', label: 'Contact' },
+            { key: '/pricing', label: 'Pricing' },
+          ]}
+        />
+      </ConfigProvider>
 
       {/* Auth Buttons Section */}
-      <Space>
-        <Button onClick={() => handleNavigate('/login')}>Log In</Button>
-        <Button 
-          type="primary" 
-          onClick={() => handleNavigate('/signup')}
-          style={{
-            background: 'linear-gradient(to right, #ec4899, #8b5cf6)',
-          }}
-        >
-          Sign Up
-        </Button>
-      </Space>
+      <div
+        style={{
+          minWidth: '150px',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
+        {isLoading ? (
+          <Spin />
+        ) : user ? (
+          // --- Logged In State ---
+          <Dropdown
+            overlay={userDropdownOverlay} // Use the custom overlay content
+            placement="bottomRight"
+            arrow
+            trigger={['click']}
+            open={isDropdownOpen}
+            onOpenChange={setIsDropdownOpen}
+          >
+            {/* The Avatar itself. Removed green dot for simplicity, can add if needed. */}
+            <Avatar
+              size="large"
+              icon={<UserOutlined />}
+              style={{ cursor: 'pointer',}}
+            />
+          </Dropdown>
+        ) : (
+          // --- Logged Out State ---
+          <Space>
+            <Button onClick={() => handleNavigate('/login')}>Log In</Button>
+            <Button
+              type="primary"
+              onClick={() => handleNavigate('/signup')}
+              style={{
+                background: 'linear-gradient(to right, #D10A50, #402579)',
+              }}
+            >
+              Sign Up
+            </Button>
+          </Space>
+        )}
+      </div>
     </Header>
   );
 };

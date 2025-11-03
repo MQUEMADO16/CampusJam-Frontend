@@ -8,7 +8,7 @@ const { TextArea } = Input;
 
 // Colors
 const brandGradient = 'linear-gradient(45deg, #d10a50 0%, #402579 100%)';
-const cardBgColor = '#6c5555ff'; // The inner card's dark-gray background
+const cardBgColor = '#6c5555ff'; // Can change later.
 
 const ContactPage: React.FC = () => {
   const onFinish = (values: any) => {
