@@ -10,7 +10,6 @@ import {
   Row,
   Select,
   Space,
-  Typography,
   message,
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
@@ -19,15 +18,12 @@ import { userService } from '../../services/user.service';
 import { TCreateUserData } from '../../types';
 import { Moment } from 'moment';
 
-const { Text } = Typography;
-
-const INSTRUMENTS = [
-  "Guitar", "Bass", "Drums", "Piano/Keys", "Vocals", "Violin", "Saxophone", "Trumpet",
-];
-
-const GENRES = [
-  "Rock", "Jazz", "Pop", "Hip-Hop", "Classical", "Metal", "Blues", "EDM", "Country",
-];
+// 1. Import your global constants
+import {
+  INSTRUMENT_OPTIONS,
+  GENRE_OPTIONS,
+  SKILL_LEVEL_OPTIONS,
+} from '../../constants/appData';
 
 const PASSWORD_RULE =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[ !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).{8,}$/;
@@ -47,7 +43,7 @@ interface SignUpFormValues {
   subscriptionTier: 'basic' | 'pro';
   instruments: string[];
   genres: string[];
-  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced';
+  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
   acceptTerms: boolean;
 }
 
@@ -62,8 +58,6 @@ const SignUpForm: React.FC = () => {
   const onFinish = async (values: SignUpFormValues) => {
     setLoading(true);
 
-    // --- THIS IS THE UPDATED LOGIC ---
-    // Now we map ALL form fields to the TCreateUserData structure
     const userData: TCreateUserData = {
       // Core fields
       name: values.name,
@@ -83,7 +77,6 @@ const SignUpForm: React.FC = () => {
         skillLevel: values.skillLevel,
       },
     };
-    // --- END OF UPDATED LOGIC ---
 
     try {
       await userService.createUser(userData);
@@ -119,17 +112,16 @@ const SignUpForm: React.FC = () => {
       }}
       scrollToFirstError
       requiredMark="optional"
-      initialValues={{ subscriptionTier: "basic" }}
+      initialValues={{ subscriptionTier: 'basic' }}
     >
       <Row gutter={[16, 0]}>
-        {/* --- All your form items are unchanged --- */}
         <Col xs={24} md={12}>
           <Form.Item
             label="Full Name"
             name="name"
             rules={[
-              { required: true, message: "Please enter your name" },
-              { min: 2, message: "Name must be at least 2 characters" },
+              { required: true, message: 'Please enter your name' },
+              { min: 2, message: 'Name must be at least 2 characters' },
             ]}
           >
             <Input placeholder="John Doe" />
@@ -141,8 +133,8 @@ const SignUpForm: React.FC = () => {
             label="Email"
             name="email"
             rules={[
-              { required: true, message: "Please enter your email" },
-              { type: "email", message: "Enter a valid email" },
+              { required: true, message: 'Please enter your email' },
+              { type: 'email', message: 'Enter a valid email' },
             ]}
           >
             <Input placeholder="john@example.com" inputMode="email" />
@@ -154,10 +146,10 @@ const SignUpForm: React.FC = () => {
             label="Password"
             name="password"
             rules={[
-              { required: true, message: "Please enter a password" },
+              { required: true, message: 'Please enter a password' },
               {
                 pattern: PASSWORD_RULE,
-                message: "Min 8 chars, with upper, lower, number & symbol.",
+                message: 'Min 8 chars, with upper, lower, number & symbol.',
               },
             ]}
             hasFeedback
@@ -170,16 +162,16 @@ const SignUpForm: React.FC = () => {
           <Form.Item
             label="Confirm Password"
             name="confirmPassword"
-            dependencies={["password"]}
+            dependencies={['password']}
             hasFeedback
             rules={[
-              { required: true, message: "Please confirm your password" },
+              { required: true, message: 'Please confirm your password' },
               ({ getFieldValue }) => ({
                 validator(_, value) {
-                  if (!value || getFieldValue("password") === value) {
+                  if (!value || getFieldValue('password') === value) {
                     return Promise.resolve();
                   }
-                  return Promise.reject(new Error("The two passwords do not match"));
+                  return Promise.reject(new Error('The two passwords do not match'));
                 },
               }),
             ]}
@@ -192,22 +184,22 @@ const SignUpForm: React.FC = () => {
           <Form.Item
             label="Date of Birth"
             name="dateOfBirth"
-            rules={[{ required: true, message: "Please select your DOB" }]}
+            rules={[{ required: true, message: 'Please select your DOB' }]}
           >
             <DatePicker
-              style={{ width: "100%" }}
+              style={{ width: '100%' }}
               disabledDate={(moment) =>
                 moment ? isUnderAgeLimit(moment.toDate(), 13) : false
               }
             />
           </Form.Item>
         </Col>
-        
+
         <Col xs={24} md={12}>
           <Form.Item
             label="Subscription Tier"
             name="subscriptionTier"
-            rules={[{ required: true, message: "Select a tier" }]}
+            rules={[{ required: true, message: 'Select a tier' }]}
           >
             <Radio.Group>
               <Radio.Button value="basic">Basic</Radio.Button>
@@ -220,13 +212,13 @@ const SignUpForm: React.FC = () => {
           <Form.Item
             label="Primary Instruments"
             name="instruments"
-            rules={[{ required: true, message: "Please select at least one instrument" }]}
+            rules={[{ required: true, message: 'Please select at least one instrument' }]}
           >
             <Select
               mode="multiple"
               allowClear
               placeholder="Select instruments"
-              options={INSTRUMENTS.map((i) => ({ value: i, label: i }))}
+              options={INSTRUMENT_OPTIONS}
             />
           </Form.Item>
         </Col>
@@ -235,13 +227,13 @@ const SignUpForm: React.FC = () => {
           <Form.Item
             label="Favorite Genres"
             name="genres"
-            rules={[{ required: true, message: "Please select at least one genre" }]}
+            rules={[{ required: true, message: 'Please select at least one genre' }]}
           >
             <Select
               mode="multiple"
               allowClear
               placeholder="Select genres"
-              options={GENRES.map((g) => ({ value: g, label: g }))}
+              options={GENRE_OPTIONS}
             />
           </Form.Item>
         </Col>
@@ -250,15 +242,11 @@ const SignUpForm: React.FC = () => {
           <Form.Item
             label="Skill Level"
             name="skillLevel"
-            rules={[{ required: true, message: "Select your level" }]}
+            rules={[{ required: true, message: 'Select your level' }]}
           >
             <Select
               placeholder="Choose one"
-              options={[
-                { value: "Beginner", label: "Beginner" },
-                { value: "Intermediate", label: "Intermediate" },
-                { value: "Advanced", label: "Advanced" },
-              ]}
+              options={SKILL_LEVEL_OPTIONS}
             />
           </Form.Item>
         </Col>
@@ -272,17 +260,17 @@ const SignUpForm: React.FC = () => {
                 validator: (_, v) =>
                   v
                     ? Promise.resolve()
-                    : Promise.reject(new Error("You must accept the Terms & Privacy")),
+                    : Promise.reject(new Error('You must accept the Terms & Privacy')),
               },
             ]}
           >
             <Checkbox>
-              I agree to the{" "}
-              <a href="#" onClick={(e) => e.preventDefault()}>
+              I agree to the{' '}
+              <a href="/terms" onClick={(e) => e.preventDefault()}>
                 Terms of Service
-              </a>{" "}
-              and{" "}
-              <a href="#" onClick={(e) => e.preventDefault()}>
+              </a>{' '}
+              and{' '}
+              <a href="/privacy" onClick={(e) => e.preventDefault()}>
                 Privacy Policy
               </a>
               .

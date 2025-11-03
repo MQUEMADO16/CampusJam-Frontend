@@ -22,17 +22,9 @@ import { TUser } from '../../types';
 
 import AccessDenied from '../AccessDenied';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+import { INSTRUMENT_OPTIONS, GENRE_OPTIONS, SKILL_LEVEL_OPTIONS } from '../../constants/appData';
 
-// --- Constants for Selects ---
-const INSTRUMENTS = [
-  "Guitar", "Bass", "Drums", "Piano/Keys", "Vocals", "Violin", "Saxophone", "Trumpet",
-];
-const GENRES = [
-  "Rock", "Jazz", "Pop", "Hip-Hop", "Classical", "Metal", "Blues", "EDM", "Country",
-];
-const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced',];
+const { Title, Text } = Typography;
 
 type UpdateFormData = {
   name: string;
@@ -65,7 +57,6 @@ const UserProfileSettings: React.FC = () => {
   }
 
   // --- Handle Access Denied ---
-  // If auth is done loading and there is still no user, deny access.
   if (!currentUser) {
     return <AccessDenied />;
   }
@@ -74,7 +65,6 @@ const UserProfileSettings: React.FC = () => {
   const onFinish = async (values: UpdateFormData) => {
     setIsSaving(true);
     try {
-      // Structure the data for the API
       const updateData = {
         name: values.name,
         email: values.email,
@@ -89,8 +79,6 @@ const UserProfileSettings: React.FC = () => {
       const response = await userService.updateUser(currentUser._id, updateData);
 
       // --- Update Global Auth Context ---
-      // We must update the context with the new user object returned from the API.
-      // Call `login` again with the new user and the existing token.
       if (response.data.user && token) {
         login(response.data.user, token);
       }
@@ -175,9 +163,12 @@ const UserProfileSettings: React.FC = () => {
                   label="Instruments"
                   rules={[{ required: true, message: 'Select at least one' }]}
                 >
-                  <Select mode="multiple" allowClear placeholder="Select instruments">
-                    {INSTRUMENTS.map((i) => (<Option key={i} value={i}>{i}</Option>))}
-                  </Select>
+                  <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="Select instruments"
+                    options={INSTRUMENT_OPTIONS}
+                  />
                 </Form.Item>
               </Col>
               <Col xs={24} sm={12}>
@@ -186,9 +177,12 @@ const UserProfileSettings: React.FC = () => {
                   label="Favorite Genres"
                   rules={[{ required: true, message: 'Select at least one' }]}
                 >
-                  <Select mode="multiple" allowClear placeholder="Select genres">
-                    {GENRES.map((g) => (<Option key={g} value={g}>{g}</Option>))}
-                  </Select>
+                  <Select
+                    mode="multiple"
+                    allowClear
+                    placeholder="Select genres"
+                    options={GENRE_OPTIONS}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -198,9 +192,10 @@ const UserProfileSettings: React.FC = () => {
               label="Skill Level"
               rules={[{ required: true, message: 'Select your level' }]}
             >
-              <Select placeholder="Choose one">
-                {SKILL_LEVELS.map((s) => (<Option key={s} value={s}>{s}</Option>))}
-              </Select>
+              <Select
+                placeholder="Choose one"
+                options={SKILL_LEVEL_OPTIONS}
+              />
             </Form.Item>
 
             <Divider />
