@@ -115,7 +115,7 @@ const AppHeader: React.FC = () => {
         </Text>
       </div>
 
-      {/* Edit Profile Button (matches image) */}
+      {/* View Profile Button (matches image) */}
       <div style={{ padding: '0 16px 16px 16px' }}>
         <Button
           type="default"
@@ -123,7 +123,7 @@ const AppHeader: React.FC = () => {
           icon={<ProfileOutlined />}
           style={{ width: '100%', textAlign: 'left', borderRadius: 6 }}
         >
-          Edit Profile
+          View Profile
         </Button>
       </div>
 
