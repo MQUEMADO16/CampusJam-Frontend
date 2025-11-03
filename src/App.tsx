@@ -8,9 +8,6 @@ import UserProfile from './pages/profile/UserProfile';
 
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
-import Footer from './components/layout/Footer/Footer';
-import Header from './components/layout/Header/Header';
-import PricingPage from './pages/Pricing/Pricing';
 
 const { Content } = Layout;
 
@@ -20,10 +17,9 @@ function App() {
     <BrowserRouter>
       <Layout style={{ minHeight: '100vh' }}>
         {/* Navbar Here */}
-          <Header />
 
-        <Content style={{ padding: '0 48px', marginTop:0, marginBottom: 0 }}>
-          <div style={{ background: '#fff', padding: 0, minHeight: 1900 }}> {/* Style parent page attributes here */}
+        <Content style={{ padding: '0 48px', marginTop: 64 }}>
+          <div style={{ background: '#fff', padding: 24, minHeight: 380 }}> {/* Style parent page attributes here */}
             <Routes>
 
               {/* Route pages here. Add relevant pages to the 'element' attribute as they are made. */}
@@ -84,17 +80,12 @@ function App() {
                 path="access-denied"
                 element={<AccessDenied />}
               />
-              {/* 2. ADD THIS NEW ROUTE FOR PRICING */}
-              <Route
-                path="/pricing"
-                element={<PricingPage />}
-              />
+
             </Routes>
           </div>
         </Content>
 
         {/* Footer here */}
-        <Footer />
       </Layout>
     </BrowserRouter>
   );
