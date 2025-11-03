@@ -8,11 +8,11 @@ import SignUp from './pages/auth/SignUp';
 import UserProfile from './pages/profile/UserProfile';
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
+import UserProfileSettings from './pages/profile/UserProfileSettings';
 
 function App() {
   return (
     <BrowserRouter>
-      {/* The <Layout> component is removed from here */}
       <Routes>
         {/* --- Group 1: Routes WITHOUT Navbar --- */}
         {/* These render standalone without the MainLayout wrapper */}
@@ -53,7 +53,7 @@ function App() {
           <Route path="profile/:userId" element={<UserProfile />} />
           <Route
             path="settings/profile"
-            element={<div>User Settings Page (Private view for editing)</div>}
+            element={<UserProfileSettings />}
           />
           <Route
             path="my-sessions"

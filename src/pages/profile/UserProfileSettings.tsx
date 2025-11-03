@@ -1,0 +1,229 @@
+import React, { useState } from 'react';
+import {
+  Card,
+  Typography,
+  Button,
+  Form,
+  Input,
+  Select,
+  Divider,
+  Row,
+  Col,
+  Spin,
+  Space,
+  message,
+} from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
+
+import { useAuth } from '../../context/auth.context';
+import { userService } from '../../services/user.service';
+import { TUser } from '../../types';
+
+import AccessDenied from '../AccessDenied';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
+
+// --- Constants for Selects ---
+const INSTRUMENTS = [
+  "Guitar", "Bass", "Drums", "Piano/Keys", "Vocals", "Violin", "Saxophone", "Trumpet",
+];
+const GENRES = [
+  "Rock", "Jazz", "Pop", "Hip-Hop", "Classical", "Metal", "Blues", "EDM", "Country",
+];
+const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced',];
+
+type UpdateFormData = {
+  name: string;
+  email: string;
+  bio: string;
+  instruments: string[];
+  genres: string[];
+  skillLevel: TUser['profile']['skillLevel'];
+};
+
+const UserProfileSettings: React.FC = () => {
+  const [form] = Form.useForm();
+  const navigate = useNavigate();
+  const { 
+    user: currentUser, 
+    isLoading: authIsLoading, 
+    token, 
+    login 
+  } = useAuth();
+  
+  const [isSaving, setIsSaving] = useState(false);
+
+  // --- Handle Auth Loading State ---
+  if (authIsLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // --- Handle Access Denied ---
+  // If auth is done loading and there is still no user, deny access.
+  if (!currentUser) {
+    return <AccessDenied />;
+  }
+
+  // --- Handle Form Submission ---
+  const onFinish = async (values: UpdateFormData) => {
+    setIsSaving(true);
+    try {
+      // Structure the data for the API
+      const updateData = {
+        name: values.name,
+        email: values.email,
+        profile: {
+          bio: values.bio,
+          instruments: values.instruments,
+          genres: values.genres,
+          skillLevel: values.skillLevel,
+        },
+      };
+
+      const response = await userService.updateUser(currentUser._id, updateData);
+
+      // --- Update Global Auth Context ---
+      // We must update the context with the new user object returned from the API.
+      // Call `login` again with the new user and the existing token.
+      if (response.data.user && token) {
+        login(response.data.user, token);
+      }
+      
+      message.success('Profile updated successfully!');
+      navigate(`/profile/${currentUser._id}`);
+
+    } catch (error) {
+      let msg = 'Failed to update profile.';
+      if (isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      message.error(msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // --- Set Initial Values for the Form ---
+  const initialFormValues = {
+    name: currentUser.name,
+    email: currentUser.email,
+    bio: currentUser.profile.bio,
+    instruments: currentUser.profile.instruments,
+    genres: currentUser.profile.genres,
+    skillLevel: currentUser.profile.skillLevel,
+  };
+
+  return (
+    <Row justify="center" style={{ padding: '24px 0' }}>
+      <Col xs={24} md={20} lg={16} xl={12}>
+        <Card style={{ width: '100%', borderRadius: '16px' }}>
+          <Title level={2}>Edit Your Profile</Title>
+          <Text type="secondary">
+            Update your account details and musician profile.
+          </Text>
+          <Divider />
+
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={onFinish}
+            initialValues={initialFormValues}
+            requiredMark="optional"
+          >
+            <Title level={4}>Account</Title>
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="name"
+                  label="Full Name"
+                  rules={[{ required: true, message: 'Please enter your name' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[
+                    { required: true, message: 'Please enter your email' },
+                    { type: 'email', message: 'Enter a valid email' },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider />
+
+            <Title level={4}>Musician Profile</Title>
+            <Form.Item name="bio" label="About Me (Bio)">
+              <Input.TextArea rows={4} placeholder="Tell everyone a bit about yourself..." />
+            </Form.Item>
+
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="instruments"
+                  label="Instruments"
+                  rules={[{ required: true, message: 'Select at least one' }]}
+                >
+                  <Select mode="multiple" allowClear placeholder="Select instruments">
+                    {INSTRUMENTS.map((i) => (<Option key={i} value={i}>{i}</Option>))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  name="genres"
+                  label="Favorite Genres"
+                  rules={[{ required: true, message: 'Select at least one' }]}
+                >
+                  <Select mode="multiple" allowClear placeholder="Select genres">
+                    {GENRES.map((g) => (<Option key={g} value={g}>{g}</Option>))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="skillLevel"
+              label="Skill Level"
+              rules={[{ required: true, message: 'Select your level' }]}
+            >
+              <Select placeholder="Choose one">
+                {SKILL_LEVELS.map((s) => (<Option key={s} value={s}>{s}</Option>))}
+              </Select>
+            </Form.Item>
+
+            <Divider />
+
+            <Form.Item>
+              <Space>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={isSaving}
+                >
+                  Save Changes
+                </Button>
+                <Button htmlType="button" onClick={() => navigate(-1)}>
+                  Cancel
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Card>
+      </Col>
+    </Row>
+  );
+};
+
+export default UserProfileSettings;
