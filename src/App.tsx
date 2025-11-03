@@ -10,6 +10,7 @@ import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
 import UserProfileSettings from './pages/profile/UserProfileSettings';
 import PricingPage from './pages/Pricing/Pricing';
+import SessionDetail from './pages/sessions/SessionDetail';
 
 function App() {
   return (
@@ -42,7 +43,7 @@ function App() {
           />
           <Route
             path="sessions/:sessionId"
-            element={<div>Session Detail Page (for a single session)</div>}
+            element={<SessionDetail />}
           />
           <Route
             path="create-session"
