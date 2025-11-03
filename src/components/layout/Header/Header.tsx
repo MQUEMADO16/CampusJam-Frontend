@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout, Menu, Button, Space, Typography } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
+import campusJamLogo from '../../../assets/campusJamLogo.png'; 
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -28,8 +29,12 @@ const AppHeader: React.FC = () => {
     >
       {/* Logo Section */}
       <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-        {/* You can replace the emoji with your <img> tag later */}
-        <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>🎸</span>
+
+        <img 
+          src={campusJamLogo} 
+          alt="CampusJam Logo" 
+          style={{ height: '50px', marginRight: '1px' }} // You can adjust the height
+        />
         <Title
           level={4}
           style={{ 
@@ -53,6 +58,10 @@ const AppHeader: React.FC = () => {
           { key: '/about', label: 'About' },
           { key: '/contact', label: 'Contact' },
           { key: '/pricing', label: 'Pricing' },
+          { key: '/sessions', label: 'Jam Board'},
+          
+
+
         ]}
       />
 
