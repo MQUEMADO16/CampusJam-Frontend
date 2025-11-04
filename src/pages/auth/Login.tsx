@@ -118,7 +118,7 @@ const Login: React.FC = () => {
             CampusJam Login
           </Title>
           <Text type="secondary" style={{ fontSize: '15px' }}>
-            Sign in to continue to the jam.
+            Your session awaits.
           </Text>
         </HeaderWrapper>
 
