@@ -13,6 +13,7 @@ import PricingPage from './pages/Header/Pricing';
 import SessionDetail from './pages/sessions/SessionDetail';
 import AboutPage from './pages/Header/AboutPage';
 import ContactUs from './pages/Header/ContactPage';
+import Dashboard from './pages/sessions/Dashboard';
 // import JamBoardPage from './pages/JamBoard/JamBoard';
 
 
@@ -35,7 +36,6 @@ function App() {
             index
             element={<div>Landing Page (Public Homepage)</div>}
           />
-          {/*ROUTE FOR PRICING */}
           <Route 
             path="pricing" element={<PricingPage />} />
 
@@ -45,15 +45,12 @@ function App() {
           <Route 
             path="contact" element={<ContactUs />} />
           
-  
-
-      
 
           {/* Core App & Session Pages */}
           {/* Note: no leading "/" on these paths */}
           <Route
             path="sessions"
-            element={<div>Jam Board Page (List of all public sessions)</div>}
+            element={<Dashboard />}
           />
           <Route
             path="sessions/:sessionId"
