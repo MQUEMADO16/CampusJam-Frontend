@@ -9,10 +9,10 @@ import UserProfile from './pages/profile/UserProfile';
 import NotFound from './pages/NotFound';
 import AccessDenied from './pages/AccessDenied';
 import UserProfileSettings from './pages/profile/UserProfileSettings';
-import PricingPage from './pages/Pricing/Pricing';
+import PricingPage from './pages/Header/Pricing';
 import SessionDetail from './pages/sessions/SessionDetail';
-import AboutPage from './pages/AboutUs/AboutPage';
-import ContactUs from './pages/ContactUs/ContactPage';
+import AboutPage from './pages/Header/AboutPage';
+import ContactUs from './pages/Header/ContactPage';
 // import JamBoardPage from './pages/JamBoard/JamBoard';
 
 
