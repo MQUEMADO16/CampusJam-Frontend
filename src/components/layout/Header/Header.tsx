@@ -23,7 +23,7 @@ import {
   BulbOutlined, // For Display & Accessibility (or another appropriate icon)
   RightOutlined, // For the arrow icon on menu items
 } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../context/auth.context';
 
@@ -36,6 +36,7 @@ const ACTIVE_COLOR = '#D10A50';
 
 const AppHeader: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modal, modalContextHolder] = Modal.useModal();
@@ -197,7 +198,7 @@ const AppHeader: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           background: '#fff',
-          borderBottom: '1px solid #f0f0fD',
+          borderBottom: '1px solid #f0f0f0',
           position: 'fixed', // Makes it stick to the top
           width: '100%',
           zIndex: 10,
@@ -246,6 +247,7 @@ const AppHeader: React.FC = () => {
           <Menu
             mode="horizontal"
             onClick={({ key }) => handleNavigate(key)}
+            selectedKeys={[location.pathname]}
             style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
             items={[
               { key: '/', label: 'Home' },
