@@ -1,7 +1,7 @@
 import React from 'react';
 import { Row, Col, Typography, Form, Input, Button, Card, ConfigProvider } from 'antd'; 
 import { SendOutlined } from '@ant-design/icons';
-import campusJamLogo from '../../assets/campusJamLogo.png';
+import campusJamLogo from '../../assets/images/campus-jam-logo-large.png';
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;

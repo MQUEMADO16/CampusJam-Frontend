@@ -1,5 +1,5 @@
 import React from 'react';
-import campusJamLogo from '../../assets/campusJamLogo.png'; 
+import campusJamLogo from '../../assets/images/campus-jam-logo-large.png'; 
 import { Row, Col, Typography, Avatar, Space } from 'antd'; 
 
 const { Title, Paragraph } = Typography;
