@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import { TSession, TUser, TMessage } from '../types';
+import { TSession, TUser } from '../types';
 
 // --- Request Body Type Definitions ---
 
@@ -13,6 +13,10 @@ type TCreateSessionData = Pick<TSession,
 // Type for updating a session (all fields optional)
 type TUpdateSessionData = Partial<Omit<TSession, '_id' | 'host' | 'attendees' | 'invitedUsers' | 'createdAt' | 'updatedAt'>>;
 
+/*
+
+DEPRECATED FOR NOW
+
 // Type for adding/removing a user to/from participants
 type TParticipantData = {
   userId: string;
@@ -24,6 +28,17 @@ type TVisibilityData = {
   isPublic: boolean;
 };
 
+*/
+
+// This matches the partial data from the 'getAllSessions' controller
+export type TPartialHost = Pick<TUser, '_id' | 'name'> & { 
+  profile: Pick<TUser['profile'], 'skillLevel'> 
+};
+export type TSessionFeed = Omit<TSession, 'host' | 'attendees'> & { 
+  host: TPartialHost; 
+  attendees: string[]; // 'getAllSessions' does not populate attendees
+};
+
 // --- API Service Object ---
 
 export const sessionService = {
@@ -32,10 +47,8 @@ export const sessionService = {
    * GET /api/sessions
    */
   getAllPublicSessions: () => {
-    // Assumes host is populated with name/skillLevel as per controller
-    type TPopulatedHost = Pick<TUser, '_id' | 'name'> & { profile: Pick<TUser['profile'], 'skillLevel'> };
-    type TSessionWithPopulatedHost = Omit<TSession, 'host'> & { host: TPopulatedHost };
-    return apiClient.get<TSessionWithPopulatedHost[]>('/sessions');
+    // Returns the new, correct TSessionFeed type
+    return apiClient.get<TSessionFeed[]>('/sessions');
   },
 
   /**
@@ -51,14 +64,9 @@ export const sessionService = {
    * GET /api/sessions/:id
    */
   getSessionById: (sessionId: string) => {
-    // Define types for populated fields based on controller
-    type TPopulatedUser = Omit<TUser, 'password' | '__v'>; // Using simple Omit for brevity
-    type TSessionWithPopulatedRefs = Omit<TSession, 'host' | 'attendees' | 'invitedUsers'> & {
-        host: TPopulatedUser;
-        attendees: TPopulatedUser[]; // Backend populates attendees.user
-        invitedUsers: TPopulatedUser[]; // Assume this is populated too, adjust if not
-    };
-    return apiClient.get<TSessionWithPopulatedRefs>(`/sessions/${sessionId}`);
+    // The global TSession type correctly expects a populated host and attendees,
+    // which matches the 'getSessionById' controller.
+    return apiClient.get<TSession>(`/sessions/${sessionId}`);
   },
 
   /**
@@ -85,9 +93,8 @@ export const sessionService = {
    * GET /api/sessions/:id/participants
    */
   getSessionParticipants: (sessionId: string) => {
-    // Controller populates attendees.user
-     type TPopulatedAttendee = Omit<TUser, 'password' | '__v'>; // Using simple Omit
-     return apiClient.get<TPopulatedAttendee[]>(`/sessions/${sessionId}/participants`);
+    // The controller returns an array of populated user objects.
+     return apiClient.get<TUser[]>(`/sessions/${sessionId}/participants`);
   },
 
   /**
