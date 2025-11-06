@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Card, Typography, message, ConfigProvider, theme, Spin } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { keyframes } from '@emotion/react';
 import styled from '@emotion/styled';
@@ -49,9 +49,42 @@ const GradientButton = styled(Button)`
   height: 45px;
   font-size: 16px;
   font-weight: bold;
-  background: linear-gradient(45deg, #d10a50 0%, #402579 100%);
   border: none;
   box-shadow: 0 4px 15px rgba(0, 118, 255, 0.3);
+  
+  /* --- This is the new transition logic --- */
+  
+  /* 1. Set the base background to the HOVER color */
+  background-color: #7B54C4; /* Your light purple hover color */
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+
+  /* 2. Keep the text on top */
+  & > span {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* 3. Create the gradient as a pseudo-element on top */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, #D10A50, #402579);
+    transition: opacity 0.3s ease-out;
+    z-index: 1;
+  }
+
+  /* 4. On hover, fade out the gradient */
+  &:hover::before {
+    opacity: 0;
+  }
+  /* --- End of new logic --- */
+
 
   /* AntD override for primary button text color */
   &.ant-btn-primary:not(:disabled) {
@@ -78,7 +111,15 @@ const Login: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login: contextLogin } = useAuth();
+  const { login: contextLogin, user, isLoading: authLoading } = useAuth(); // Get user and loading state
+
+  // --- Redirect if already logged in ---
+  useEffect(() => {
+    if (!authLoading && user) {
+      // User is already logged in, redirect them.
+      navigate('/sessions');
+    }
+  }, [user, authLoading, navigate]);
 
   // --- Logic Implementation ---
   const handleFinish = async (values: any) => {
@@ -110,6 +151,16 @@ const Login: React.FC = () => {
     }
   };
 
+  // --- Render Logic ---
+  // Don't render the form if auth is loading or user is found
+  if (authLoading || user) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <LoginPageWrapper>
       <LoginCard hoverable>
@@ -129,35 +180,37 @@ const Login: React.FC = () => {
           onFinish={handleFinish}
           requiredMark={false}
         >
-          <Form.Item
-            name="email"
-            label={<label style={labelStyle}>Email</label>}
-            rules={[
-              { required: true, message: 'Please enter your email' },
-              { type: 'email', message: 'Enter a valid email address' },
-            ]}
-          >
-            <StyledInput
-              prefix={<MailOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-              placeholder="Your email address"
-              size="large"
-            />
-          </Form.Item>
+          <ConfigProvider theme={{ ...theme.defaultConfig }}>
+            <Form.Item
+              name="email"
+              label={<label style={labelStyle}>Email</label>}
+              rules={[
+                { required: true, message: 'Please enter your email' },
+                { type: 'email', message: 'Enter a valid email address' },
+              ]}
+            >
+              <StyledInput
+                prefix={<MailOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                placeholder="Your email address"
+                size="large"
+              />
+            </Form.Item>
 
-          <Form.Item
-            name="password"
-            label={<label style={labelStyle}>Password</label>}
-            rules={[
-              { required: true, message: 'Please enter your password' },
-              { min: 6, message: 'Password must be at least 6 characters' },
-            ]}
-          >
-            <StyledInputPassword
-              prefix={<LockOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
-              placeholder="Your password"
-              size="large"
-            />
-          </Form.Item>
+            <Form.Item
+              name="password"
+              label={<label style={labelStyle}>Password</label>}
+              rules={[
+                { required: true, message: 'Please enter your password' },
+                { min: 6, message: 'Password must be at least 6 characters' },
+              ]}
+            >
+              <StyledInputPassword
+                prefix={<LockOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
+                placeholder="Your password"
+                size="large"
+              />
+            </Form.Item>
+          </ConfigProvider>
 
           <Form.Item style={{ marginBottom: 20 }}>
             <GradientButton
@@ -187,3 +240,4 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+
