@@ -1,8 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+// Layouts
 import MainLayout from './components/layout/MainLayout';
+import DashboardLayout from './components/layout/DashboardLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
+// Pages
 import Login from './pages/auth/Login';
 import SignUp from './pages/auth/SignUp';
 import UserProfile from './pages/profile/UserProfile';
@@ -27,7 +31,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/access-denied" element={<AccessDenied />} />
 
-        {/* --- Group 2: Routes WITH Navbar --- */}
+        {/* --- Group 2: Routes WITH Navbar (Public Pages) --- */}
         {/* This <Route> uses MainLayout as its element.
             All child routes will render inside MainLayout's <Outlet /> */}
         <Route path="/" element={<MainLayout />}>
@@ -45,36 +49,30 @@ function App() {
           <Route 
             path="contact" element={<ContactUs />} />
           
-
-          {/* Core App & Session Pages */}
-          {/* Note: no leading "/" on these paths */}
-          <Route
-            path="sessions"
-            element={<Dashboard />}
-          />
-          <Route
-            path="sessions/:sessionId"
-            element={<SessionDetail />}
-          />
-          <Route
-            path="create-session"
-            element={<div>Create Session Page (Form)</div>}
-          />
-          <Route
-            path="sessions/:sessionId/edit"
-            element={<div>Edit Session Page (Form)</div>}
-          />
-
-          {/* User & Profile Pages */}
           <Route path="profile/:userId" element={<UserProfile />} />
-          <Route
-            path="settings/profile"
-            element={<UserProfileSettings />}
-          />
-          <Route
-            path="my-sessions"
-            element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
-          />
+        </Route>
+
+        {/* --- Group 3: Routes WITH Sidebar (Private Pages) --- */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            {/* All private app pages go here */}
+            <Route
+              path="sessions"
+              element={<Dashboard />}
+            />
+            <Route
+              path="sessions/:sessionId"
+              element={<SessionDetail />}
+            />
+            <Route
+              path="settings/profile"
+              element={<UserProfileSettings />}
+            />
+            <Route
+              path="my-sessions"
+              element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
+            />
+          </Route>
         </Route>
 
         {/* --- Catch-all 404 Page (must be at the end) --- */}

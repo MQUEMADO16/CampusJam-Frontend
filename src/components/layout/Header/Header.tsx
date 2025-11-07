@@ -34,7 +34,13 @@ const { Title, Text } = Typography;
 
 const ACTIVE_COLOR = '#D10A50';
 
-const AppHeader: React.FC = () => {
+// Define the props for the component
+interface AppHeaderProps {
+  layout?: 'main' | 'dashboard'; // 'main' is public, 'dashboard' is logged in
+}
+
+// Accept the 'layout' prop, defaulting to 'main'
+const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, logout } = useAuth();
@@ -48,17 +54,15 @@ const AppHeader: React.FC = () => {
       content: 'Are you sure you want to log out?',
       okText: 'Log Out',
       cancelText: 'Cancel',
-      width: 500,
+      width: 400, // Adjusted width
       onOk: () => {
-        // This runs if the user clicks "OK"
         logout();
-        navigate('/'); // Navigate to home after logout
-        messageApi.success('Logged out successfully.'); // Use the messageApi
-        setIsDropdownOpen(false); // Close dropdown AFTER action
+        navigate('/');
+        messageApi.success('Logged out successfully.');
+        setIsDropdownOpen(false);
       },
       onCancel: () => {
-        // Optional: Do something if they cancel
-        setIsDropdownOpen(false); // Close dropdown AFTER action
+        setIsDropdownOpen(false);
       },
     });
   };
@@ -67,39 +71,37 @@ const AppHeader: React.FC = () => {
     if (user) {
       navigate(`/profile/${user._id}`);
     }
-    setIsDropdownOpen(false); // Close dropdown
+    setIsDropdownOpen(false);
   };
 
-  // This handles navigation for both Menu and Buttons
   const handleNavigate = (path: string) => {
     navigate(path);
   };
 
-  // Placeholder for future navigation
   const handleSettingsClick = () => {
-    navigate('/settings/account'); // Example path
-    setIsDropdownOpen(false); // Close dropdown
+    navigate('/settings/account');
+    setIsDropdownOpen(false);
   };
 
   const handleHelpClick = () => {
-    navigate('/help'); // Example path
-    setIsDropdownOpen(false); // Close dropdown
+    navigate('/help');
+    setIsDropdownOpen(false);
   };
 
   const handleDisplayClick = () => {
-    navigate('/display-settings'); // Example path
-    setIsDropdownOpen(false); // Close dropdown
+    navigate('/display-settings');
+    setIsDropdownOpen(false);
   };
 
   const userDropdownOverlay = (
     <Card
       style={{
-        width: 280, // Fixed width for the card
+        width: 280,
         borderRadius: 8,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        padding: '0', // Remove default card padding if internal elements manage it
+        padding: '0',
       }}
-      bodyStyle={{ padding: '0' }} // Remove body padding too
+      bodyStyle={{ padding: '0' }}
     >
       {/* User Info Header */}
       <div
@@ -116,7 +118,7 @@ const AppHeader: React.FC = () => {
         </Text>
       </div>
 
-      {/* View Profile Button (matches image) */}
+      {/* View Profile Button */}
       <div style={{ padding: '0 16px 16px 16px' }}>
         <Button
           type="default"
@@ -128,7 +130,7 @@ const AppHeader: React.FC = () => {
         </Button>
       </div>
 
-      <Divider style={{ margin: '0 0 8px 0' }} /> {/* Separator */}
+      <Divider style={{ margin: '0 0 8px 0' }} />
 
       {/* Menu Items */}
       <Space
@@ -170,7 +172,6 @@ const AppHeader: React.FC = () => {
               alignItems: 'center',
               padding: '10px 16px',
               cursor: 'pointer',
-              // Hover effect
               transition: 'background-color 0.2s',
             }}
           >
@@ -189,7 +190,6 @@ const AppHeader: React.FC = () => {
 
   return (
     <>
-      {/* Render the context holders. They are invisible. */}
       {modalContextHolder}
       {messageContextHolder}
       <Header
@@ -199,13 +199,13 @@ const AppHeader: React.FC = () => {
           justifyContent: 'space-between',
           background: '#fff',
           borderBottom: '1px solid #f0f0f0',
-          position: 'fixed', // Makes it stick to the top
+          position: 'fixed',
           width: '100%',
           zIndex: 10,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         }}
       >
-        {/* Logo Section */}
+        {/* Logo Section (Always visible) */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>
             <img
@@ -227,38 +227,45 @@ const AppHeader: React.FC = () => {
           </Title>
         </Link>
 
-        <ConfigProvider
-          theme={{
-            token: {
-              // This will change the accent color (like the bottom border)
-              colorPrimary: ACTIVE_COLOR,
-            },
-            components: {
-              Menu: {
-                itemSelectedColor: ACTIVE_COLOR,
-                itemHoverColor: ACTIVE_COLOR,
-                fontSize: 18,
-                itemPaddingInline: 24,
+        {/* Conditionally render the Menu */}
+        {layout === 'main' && (
+          <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: ACTIVE_COLOR,
               },
-            },
-          }}
-        >
-          {/* Navigation Menu */}
-          <Menu
-            mode="horizontal"
-            onClick={({ key }) => handleNavigate(key)}
-            selectedKeys={[location.pathname]}
-            style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
-            items={[
-              { key: '/', label: 'Home' },
-              { key: '/about', label: 'About' },
-              { key: '/contact', label: 'Contact' },
-              { key: '/pricing', label: 'Pricing' },
-            ]}
-          />
-        </ConfigProvider>
+              components: {
+                Menu: {
+                  itemSelectedColor: ACTIVE_COLOR,
+                  itemHoverColor: ACTIVE_COLOR,
+                  fontSize: 16, // Adjusted from 18px for better fit
+                  itemPaddingInline: 24,
+                },
+              },
+            }}
+          >
+            {/* Navigation Menu */}
+            <Menu
+              mode="horizontal"
+              onClick={({ key }) => handleNavigate(key)}
+              selectedKeys={[location.pathname]}
+              style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
+              items={[
+                { key: '/', label: 'Home' },
+                { key: '/about', label: 'About' },
+                { key: '/contact', label: 'Contact' },
+                { key: '/pricing', label: 'Pricing' },
+              ]}
+            />
+          </ConfigProvider>
+        )}
+        
+        {/* If in dashboard, add a simple spacer to keep auth buttons to the right */}
+        {layout === 'dashboard' && (
+          <div style={{ flex: 1 }} />
+        )}
 
-        {/* Auth Buttons Section */}
+        {/* Auth Buttons Section (Always visible, logic is auth-aware) */}
         <div
           style={{
             minWidth: '150px',
@@ -269,38 +276,29 @@ const AppHeader: React.FC = () => {
           {isLoading ? (
             <Spin />
           ) : user ? (
-            // --- Logged In State ---
             <Dropdown
-              overlay={userDropdownOverlay} // Use the custom overlay content
+              overlay={userDropdownOverlay}
               placement="bottomRight"
               arrow
               trigger={['click']}
-              // Control the open state
               open={isDropdownOpen}
               onOpenChange={setIsDropdownOpen}
               dropdownRender={(menu) => (
-                <div style={{ marginTop: '8px' }}>
-                  {menu}
-                </div>
+                <div style={{ marginTop: '8px' }}>{menu}</div>
               )}
             >
-              {/* The Avatar itself. Removed green dot for simplicity, can add if needed. */}
               <Avatar
                 size="large"
                 icon={<UserOutlined />}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', border: '1px solid #ddd' }}
               />
             </Dropdown>
           ) : (
-            // --- Logged Out State ---
             <Space>
               <Button onClick={() => handleNavigate('/login')}>Log In</Button>
               <Button
                 type="primary"
                 onClick={() => handleNavigate('/signup')}
-                style={{
-                  background: 'linear-gradient(to right, #D10A50, #402579)',
-                }}
               >
                 Sign Up
               </Button>
