@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { List, Spin, Typography, Alert, Empty, Card, Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
 import { userService } from '../../services/user.service';
@@ -94,12 +96,9 @@ const FriendsList: React.FC = () => {
             <Card style={{ width: '100%' }}>
               <Card.Meta
                 avatar={
-                  <Avatar 
-                    size="large" 
-                    style={{ backgroundColor: '#f56a00' }}
-                  >
-                    {friend.name.charAt(0).toUpperCase()}
-                  </Avatar>
+                  <Link to={`/profile/${friend._id}`}>
+                    <Avatar icon={<UserOutlined />} size="large" />
+                  </Link>
                 }
                 title={friend.name}
                 description={
