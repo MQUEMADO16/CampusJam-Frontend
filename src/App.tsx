@@ -78,7 +78,11 @@ function App() {
             path="my-sessions"
             element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
           />
-         
+         <Route
+            path="my-connections"
+            element={<div>My Connections Page (Friend List)</div>}
+          />
+
         </Route>
 
         {/* --- Catch-all 404 Page (must be at the end) --- */}
