@@ -15,6 +15,7 @@ import AboutPage from './pages/Header/AboutPage';
 import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
+import FriendsList from './pages/profile/FriendList';
 // import JamBoardPage from './pages/JamBoard/JamBoard';
 
 
@@ -80,7 +81,7 @@ function App() {
           />
          <Route
             path="my-connections"
-            element={<div>My Connections Page (Friend List)</div>}
+            element={<FriendsList />}
           />
 
         </Route>
