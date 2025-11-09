@@ -15,6 +15,7 @@ import AboutPage from './pages/Header/AboutPage';
 import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
+import FriendsList from './pages/profile/FriendList';
 // import JamBoardPage from './pages/JamBoard/JamBoard';
 
 
@@ -78,7 +79,11 @@ function App() {
             path="my-sessions"
             element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
           />
-         
+         <Route
+            path="my-connections"
+            element={<FriendsList />}
+          />
+
         </Route>
 
         {/* --- Catch-all 404 Page (must be at the end) --- */}
