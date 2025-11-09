@@ -18,6 +18,8 @@ import SessionDetail from './pages/sessions/SessionDetail';
 import AboutPage from './pages/Header/AboutPage';
 import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
+import LandingPage from './pages/Landing/Landing';
+import FriendsList from './pages/profile/FriendList';
 // import JamBoardPage from './pages/JamBoard/JamBoard';
 
 
@@ -38,8 +40,8 @@ function App() {
           {/* path="/" is now the 'index' of this group */}
           <Route
             index
-            element={<div>Landing Page (Public Homepage)</div>}
-          />
+            element={<LandingPage />}/>
+          
           <Route 
             path="pricing" element={<PricingPage />} />
 
@@ -48,6 +50,8 @@ function App() {
           
           <Route 
             path="contact" element={<ContactUs />} />
+
+          
           
           <Route path="profile/:userId" element={<UserProfile />} />
         </Route>
@@ -71,6 +75,10 @@ function App() {
             <Route
               path="my-sessions"
               element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
+            />
+            <Route
+              path="connections"
+              element={<FriendsList />}
             />
           </Route>
         </Route>

@@ -4,7 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomerServiceOutlined, // For "Browse Sessions"
   UserOutlined, // For "My Sessions"
-  TeamOutlined, // For "Network"
+  TeamOutlined, // For "My Connections"
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
 
@@ -29,15 +29,15 @@ const DashboardLayout: React.FC = () => {
       label: 'Browse Sessions',
     },
     {
-      key: '/network', // This is for the social graph
+      key: '/connections', // This is for the social graph
       icon: <TeamOutlined />,
-      label: 'Network',
+      label: 'My Connections',
     },
   ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <AppHeader layout="dashboard" />
+      <AppHeader layout="dashboard" />z
 
       <Layout style={{ marginTop: 64 }}> {/* Offset for the fixed header */}
         <Sider
