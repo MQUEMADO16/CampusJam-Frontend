@@ -19,9 +19,7 @@ import AboutPage from './pages/Header/AboutPage';
 import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
-import FriendsList from './pages/profile/FriendList';
-// import JamBoardPage from './pages/JamBoard/JamBoard';
-
+import FriendsList from './pages/profile/Connections';
 
 function App() {
   return (
