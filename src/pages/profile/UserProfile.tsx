@@ -10,12 +10,15 @@ import {
   Col,
   Space,
   Spin,
+  message,
 } from 'antd';
 import {
   UserOutlined,
   EditOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
 } from '@ant-design/icons';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams,} from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
 import { userService } from '../../services/user.service';
@@ -29,21 +32,19 @@ const { Title, Text, Paragraph } = Typography;
 
 const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
   
-  // Get the currently logged-in user
-  const { user: currentUser, isLoading: authIsLoading } = useAuth();
+  const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
   
-  // State for the user whose profile we are viewing
   const [profileUser, setProfileUser] = useState<TUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // State to handle errors (404 Not Found, 403 Forbidden)
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
+
+  const [isFriend, setIsFriend] = useState(false);
+  const [friendLoading, setFriendLoading] = useState(false);
 
   useEffect(() => {
     if (!userId) {
-      setErrorType('404'); // No ID in URL, definitely not found
+      setErrorType('404'); 
       return;
     }
 
@@ -52,21 +53,17 @@ const UserProfile: React.FC = () => {
         setIsLoading(true);
         setErrorType(null);
         
-        // Call the service to get the profile data
         const response = await userService.getUserById(userId);
         setProfileUser(response.data);
 
       } catch (error) {
-        // Handle API errors
         if (isAxiosError(error)) {
           if (error.response?.status === 404) {
             setErrorType('404');
           } else {
-            // For any other error (e.g., 403, 500), show Access Denied
             setErrorType('403');
           }
         } else {
-          // Generic error
           setErrorType('403');
         }
         console.error('Failed to fetch user profile:', error);
@@ -76,9 +73,53 @@ const UserProfile: React.FC = () => {
     };
 
     fetchUserProfile();
-  }, [userId]); // Re-run this effect if the userId in the URL changes
+  }, [userId]);
 
-  // Show main loading spinner while auth or data is loading
+  useEffect(() => {
+    // Run only after both users have loaded
+    if (currentUser && profileUser) {
+      // Check if the profileUser's ID is in the currentUser's following list
+      const isFollowing = currentUser.connections.following.includes(profileUser._id);
+      setIsFriend(isFollowing);
+    }
+  }, [currentUser, profileUser]);
+
+  const handleAddFriend = async () => {
+    if (!currentUser || !profileUser) return;
+    setFriendLoading(true);
+    try {
+      const response = await userService.addFriend(currentUser._id, profileUser._id);
+      // Update the AuthContext with the new user object (which has updated 'following' array)
+      if (response.data.user && token) {
+        login(response.data.user, token);
+      }
+      setIsFriend(true);
+      message.success(`You are now following ${profileUser.name}`);
+    } catch (err) {
+      message.error('Failed to add friend. Please try again.');
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleRemoveFriend = async () => {
+    if (!currentUser || !profileUser) return;
+    setFriendLoading(true);
+    try {
+      const response = await userService.removeFriend(currentUser._id, profileUser._id);
+      // Update the AuthContext
+      if (response.data.user && token) {
+        login(response.data.user, token);
+      }
+      setIsFriend(false);
+      message.success(`You are no longer following ${profileUser.name}`);
+    } catch (err) {
+      message.error('Failed to remove friend. Please try again.');
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
   if (authIsLoading || isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -87,7 +128,6 @@ const UserProfile: React.FC = () => {
     );
   }
 
-  // Handle errors
   if (errorType === '404') {
     return <NotFound />;
   }
@@ -95,15 +135,12 @@ const UserProfile: React.FC = () => {
     return <AccessDenied />;
   }
 
-  // Handle if user is null (shouldn't happen if logic is correct, but good safety check)
   if (!profileUser) {
     return <NotFound />;
   }
 
-  // Check if the logged-in user is the owner of this profile
   const isOwner = currentUser?._id === profileUser._id;
 
-  // Render the profile page
   return (
     <Row justify="center" style={{ padding: '24px 0' }}>
       <Col xs={24} md={20} lg={16} xl={12}>
@@ -113,18 +150,31 @@ const UserProfile: React.FC = () => {
             <Col xs={24} sm="auto">
               <Avatar size={128} icon={<UserOutlined />} />
             </Col>
-            <Col xs={24} sm="auto" flex="auto">
-              {/* Use the fetched profileUser data */}
-              <Title level={2} style={{ marginBottom: 0 }}>
-                {profileUser.name}
-              </Title>
-              <Space direction="horizontal" size={18} wrap>
+
+            <Col
+              xs={24}
+              sm="auto"
+              flex="auto"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between', // Pushes children to ends
+                alignItems: 'center',           // Vertically centers them
+                flexWrap: 'wrap',                // Allows button to wrap on small screens
+                gap: '16px',                     // Adds a gap
+              }}
+            >
+              <div>
+                <Title level={2} style={{ marginBottom: 0 }}>
+                  {profileUser.name}
+                </Title>
                 <Text type="secondary" style={{ fontSize: '16px' }} ellipsis>
                   {profileUser.email}
                 </Text>
-                
-                {/* --- Conditional Edit Button --- */}
-                {isOwner && (
+              </div>
+
+              <div>
+                {isOwner ? (
+                  // User is viewing their own profile
                   <Link to="/settings/profile">
                     <Button
                       type="primary"
@@ -133,8 +183,29 @@ const UserProfile: React.FC = () => {
                       Edit Profile
                     </Button>
                   </Link>
-                )}
-              </Space>
+                ) : currentUser ? ( 
+                  // User is logged in AND viewing someone else's profile
+                  isFriend ? (
+                    <Button
+                      danger
+                      icon={<UserDeleteOutlined />}
+                      onClick={handleRemoveFriend}
+                      loading={friendLoading}
+                    >
+                      Unfollow
+                    </Button>
+                  ) : (
+                    <Button
+                      type="primary"
+                      icon={<UserAddOutlined />}
+                      onClick={handleAddFriend}
+                      loading={friendLoading}
+                    >
+                      Follow
+                    </Button>
+                  )
+                ) : null /* User is logged out, show no button */ }
+              </div>
             </Col>
           </Row>
 

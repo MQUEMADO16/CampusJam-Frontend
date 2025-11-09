@@ -161,7 +161,6 @@ export const userService = {
    * GET /api/users/:id/friends
    */
   getFriends: (userId: string) => {
-    // Assuming backend populates friends with name/email
     return apiClient.get<{ friends: Pick<TUser, '_id' | 'name' | 'email'>[] }>(
       `/users/${userId}/friends`
     );
