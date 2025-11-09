@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Row, Col, Typography, Button, Card, Space } from 'antd';
 import {
   PlayCircleOutlined,
@@ -13,6 +14,7 @@ const { Title, Text } = Typography;
 
 const LandingPage: React.FC = () => {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   // Base style for the cards
   const baseCardStyle: React.CSSProperties = {
@@ -30,6 +32,9 @@ const LandingPage: React.FC = () => {
     boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)', // Larger shadow
   };
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <div
@@ -75,7 +80,7 @@ const LandingPage: React.FC = () => {
           </Text>
           <div style={{ marginTop: 20 }}>
             <Space size="large">
-              <Button type="primary" size="large" style={{ fontWeight: 600, fontSize: '1.5rem', padding: '0 30px' }}>
+              <Button type="primary" size="large" style={{ fontWeight: 600, fontSize: '1.5rem', padding: '0 30px' }} onClick={() => handleNavigate('/login')}>
                 Find a Session
               </Button>
             </Space>
