@@ -37,7 +37,7 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <AppHeader layout="dashboard" />z
+      <AppHeader layout="dashboard" />
 
       <Layout style={{ marginTop: 64 }}> {/* Offset for the fixed header */}
         <Sider

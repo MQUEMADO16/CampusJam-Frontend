@@ -48,10 +48,6 @@ function App() {
           
           <Route 
             path="contact" element={<ContactUs />} />
-
-          
-          
-          <Route path="profile/:userId" element={<UserProfile />} />
         </Route>
 
         {/* --- Group 3: Routes WITH Sidebar (Private Pages) --- */}
@@ -77,6 +73,10 @@ function App() {
             <Route
               path="connections"
               element={<FriendsList />}
+            />
+            <Route 
+              path="profile/:userId"
+              element={<UserProfile />}
             />
           </Route>
         </Route>
