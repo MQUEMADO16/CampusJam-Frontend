@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Avatar,
@@ -12,15 +12,19 @@ import {
   Spin,
   List,
   Descriptions,
+  message,
 } from 'antd';
 import {
   UserOutlined,
   EditOutlined,
   CalendarOutlined,
+  ClockCircleOutlined,
   EnvironmentOutlined,
+  CustomerServiceOutlined,
   TeamOutlined,
   CheckCircleOutlined,
   InfoCircleOutlined,
+  MinusCircleOutlined,
 } from '@ant-design/icons';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
@@ -54,10 +58,10 @@ const StatusTag: React.FC<{ status: TSession['status'] }> = ({ status }) => {
   }
 };
 
-// The error indicates the API returns a TSession with 'invitedUsers' populated.
-// We'll create a local type for this to use in our state.
-type TPopulatedSession = Omit<TSession, 'invitedUsers'> & {
-  invitedUsers: TUser[]; // The API is sending TUser objects
+type TPopulatedSession = Omit<TSession, 'invitedUsers' | 'attendees' | 'host'> & {
+  host: TUser;
+  attendees: TUser[];
+  invitedUsers: TUser[];
 };
 
 const SessionDetail: React.FC = () => {
@@ -66,45 +70,83 @@ const SessionDetail: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser, isLoading: authIsLoading } = useAuth();
   
-  // Use our new local type for the state
   const [session, setSession] = useState<TPopulatedSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
 
   // --- Data Fetching Effect ---
-  useEffect(() => {
+  const fetchSession = useCallback(async () => {
     if (!sessionId) {
       setErrorType('404');
       return;
     }
+    // We only set the main page loader on the *initial* fetch
+    // or if the session state hasn't been set yet.
+    if (isLoading || !session) setIsLoading(true);
+    
+    try {
+      setErrorType(null);
+      const response = await sessionService.getSessionById(sessionId);
 
-    const fetchSession = async () => {
-      try {
-        setIsLoading(true);
-        setErrorType(null);
-        
-        const response = await sessionService.getSessionById(sessionId);
-        setSession(response.data as any as TPopulatedSession);
+      // --- DEBUGGING STEP ---
+      // Log the raw data to the browser console *before* you type it
+      console.log('RAW SESSION DATA:', response.data);
+      console.log('RAW ATTENDEES ARRAY:', response.data.attendees);
+      // ---
 
-      } catch (error) {
-        if (isAxiosError(error)) {
-          if (error.response?.status === 404) {
-            setErrorType('404');
-          } else {
-            // Treat other errors (403, 500) as "Access Denied" for simplicity
-            setErrorType('403');
-          }
+      setSession(response.data as any as TPopulatedSession);
+    } catch (error) {
+      if (isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          setErrorType('404');
         } else {
           setErrorType('403');
         }
-        console.error('Failed to fetch session:', error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setErrorType('403');
       }
-    };
+      console.error('Failed to fetch session:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, isLoading, session]); // Re-added isLoading and session
 
+  useEffect(() => {
     fetchSession();
-  }, [sessionId, navigate]);
+  }, [fetchSession, sessionId]); // Changed to depend on fetchSession
+
+  // --- Button Handlers ---
+  const handleJoinSession = async () => {
+    if (!currentUser || !session) return;
+    setJoinLoading(true);
+    try {
+      await sessionService.addUserToSession(session._id, currentUser._id);
+      message.success("You've joined the session!");
+      await fetchSession(); 
+    } catch (err) {
+      message.error("Failed to join session. You may already be an attendee.");
+      console.error(err);
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  const handleLeaveSession = async () => {
+    if (!currentUser || !session) return;
+    setJoinLoading(true);
+    try {
+      await sessionService.removeUserFromSession(session._id, currentUser._id);
+      message.info("You've left the session.");
+      await fetchSession(); 
+    } catch (err) {
+      message.error("Failed to leave session.");
+      console.error(err);
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
 
   // --- Render Logic ---
 
@@ -118,12 +160,10 @@ const SessionDetail: React.FC = () => {
 
   if (errorType === '404') return <NotFound />;
   if (errorType === '403') return <AccessDenied />;
-  if (!session) return <NotFound />; // Safety check
+  if (!session) return <NotFound />; 
 
-  // Check if the logged-in user is the host
-  const isHost = currentUser?._id === session.host._id;
-
-  // Check if the logged-in user is already an attendee
+  const isHost = currentUser?._id === session.host?._id;
+  
   const isAttending = session.attendees.some(
     (attendee) => attendee._id === currentUser?._id
   );
@@ -148,11 +188,22 @@ const SessionDetail: React.FC = () => {
                     <Button icon={<EditOutlined />}>Edit Session</Button>
                   </Link>
                 ) : isAttending ? (
-                  <Button type="default" disabled icon={<CheckCircleOutlined />}>
-                    Attending
+                  <Button
+                    type="default"
+                    danger
+                    icon={<MinusCircleOutlined />}
+                    onClick={handleLeaveSession}
+                    loading={joinLoading}
+                  >
+                    Leave Session
                   </Button>
                 ) : (
-                  <Button type="primary" icon={<CheckCircleOutlined />}>
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    onClick={handleJoinSession}
+                    loading={joinLoading}
+                  >
                     Join Session
                   </Button>
                 )}
@@ -174,12 +225,16 @@ const SessionDetail: React.FC = () => {
               <Title level={4} style={{ marginTop: 24 }}>Details</Title>
               <Descriptions bordered column={1} size="small">
                 <Descriptions.Item label={<Space><UserOutlined /> Host</Space>}>
-                  <Link to={`/profile/${session.host._id}`}>
-                    <Space>
-                      <Avatar src={/* session.host.avatarUrl */ ''} icon={<UserOutlined />} />
-                      {session.host.name}
-                    </Space>
-                  </Link>
+                  {session.host ? (
+                    <Link to={`/profile/${session.host._id}`}>
+                      <Space>
+                        <Avatar icon={<UserOutlined />} />
+                        {session.host.name}
+                      </Space>
+                    </Link>
+                  ) : (
+                    <Text type="secondary">User not found</Text>
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
                   {new Date(session.startTime).toLocaleString()}
@@ -188,7 +243,7 @@ const SessionDetail: React.FC = () => {
                 <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
                   {session.location || 'Not specified'}
                 </Descriptions.Item>
-                <Descriptions.Item label={<Space>Genre</Space>}>
+                <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
                   <Tag>{session.genre || 'Any'}</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label={<Space><InfoCircleOutlined /> Skill Level</Space>}>
@@ -219,9 +274,14 @@ const SessionDetail: React.FC = () => {
                 renderItem={(user) => (
                   <List.Item>
                     <List.Item.Meta
-                      avatar={<Avatar src={/* user.avatarUrl */ ''} icon={<UserOutlined />} />}
-                      title={<Link to={`/profile/${user._id}`}>{user.name}</Link>}
-                      description={user.profile.instruments.join(', ')}
+                      description={
+                        <Link to={`/profile/${user._id}`}>
+                          <Space>
+                            <Avatar icon={<UserOutlined />} />
+                            {user.name}
+                          </Space>
+                        </Link>
+                      }
                     />
                   </List.Item>
                 )}
@@ -235,3 +295,4 @@ const SessionDetail: React.FC = () => {
 };
 
 export default SessionDetail;
+
