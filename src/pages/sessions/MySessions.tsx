@@ -50,7 +50,7 @@ const SessionList: React.FC<{ sessions: TSessionFeed[] }> = ({ sessions }) => {
               </Title>
             }
           >
-            <Button type="primary" onClick={() => navigate('/create-session')}>
+            <Button type="primary" onClick={() => navigate('/sessions/create')}>
               Create a Session
             </Button>
           </Empty>
