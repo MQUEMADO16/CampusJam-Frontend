@@ -1,45 +1,24 @@
 import apiClient from './apiClient';
-import { TSession, TUser } from '../types';
+import { TSession, TUser, TMessage } from '../types';
 
-// --- Request Body Type Definitions ---
-
-// Type for creating a new session (omits auto-generated fields)
 type TCreateSessionData = Pick<TSession,
-  'title' | 'host' | 'startTime'
-> & Partial<Pick<TSession, // Optional fields
+  'title'| 'host' | 'startTime'
+> & Partial<Pick<TSession,
   'description' | 'isPublic' | 'endTime' | 'location' | 'genre' | 'skillLevel' | 'instrumentsNeeded' | 'spotifyPlaylistUrl'
 >>;
 
-// Type for updating a session (all fields optional)
 type TUpdateSessionData = Partial<Omit<TSession, '_id' | 'host' | 'attendees' | 'invitedUsers' | 'createdAt' | 'updatedAt'>>;
 
-/*
-
-DEPRECATED FOR NOW
-
-// Type for adding/removing a user to/from participants
-type TParticipantData = {
-  userId: string;
+// This matches the partial host from 'getAllSessions' and 'getUserSessions'
+export type TPartialHost = Pick<TUser, '_id' | 'name'> & {
+  profile: Pick<TUser['profile'], 'skillLevel'>
 };
 
-// Type for setting/updating session visibility
-type TVisibilityData = {
-  sessionId: string;
-  isPublic: boolean;
+// This matches the lightweight session list
+export type TSessionFeed = Omit<TSession, 'host' | 'attendees'> & {
+  host: TPartialHost;
+  attendees: string[]; // These endpoints don't populate attendees
 };
-
-*/
-
-// This matches the partial data from the 'getAllSessions' controller
-export type TPartialHost = Pick<TUser, '_id' | 'name'> & { 
-  profile: Pick<TUser['profile'], 'skillLevel'> 
-};
-export type TSessionFeed = Omit<TSession, 'host' | 'attendees'> & { 
-  host: TPartialHost; 
-  attendees: string[]; // 'getAllSessions' does not populate attendees
-};
-
-// --- API Service Object ---
 
 export const sessionService = {
   /**
@@ -47,8 +26,18 @@ export const sessionService = {
    * GET /api/sessions
    */
   getAllPublicSessions: () => {
-    // Returns the new, correct TSessionFeed type
     return apiClient.get<TSessionFeed[]>('/sessions');
+  },
+
+  /**
+   * Fetches all sessions (hosted and joined) for the current user.
+   * GET /api/sessions/my-sessions
+   */
+  getUserSessions: () => {
+    return apiClient.get<{
+      hostedSessions: TSessionFeed[];
+      joinedSessions: TSessionFeed[];
+    }>('/sessions/my-sessions');
   },
 
   /**
@@ -64,8 +53,6 @@ export const sessionService = {
    * GET /api/sessions/:id
    */
   getSessionById: (sessionId: string) => {
-    // The global TSession type correctly expects a populated host and attendees,
-    // which matches the 'getSessionById' controller.
     return apiClient.get<TSession>(`/sessions/${sessionId}`);
   },
 
@@ -93,7 +80,6 @@ export const sessionService = {
    * GET /api/sessions/:id/participants
    */
   getSessionParticipants: (sessionId: string) => {
-    // The controller returns an array of populated user objects.
      return apiClient.get<TUser[]>(`/sessions/${sessionId}/participants`);
   },
 
@@ -102,7 +88,7 @@ export const sessionService = {
    * POST /api/sessions/:id/participants
    */
   addUserToSession: (sessionId: string, userId: string) => {
-    return apiClient.post<{ message: string; attendees: string[] }>( // Returns array of ObjectIds
+    return apiClient.post<{ message: string; attendees: string[] }>(
       `/sessions/${sessionId}/participants`,
       { userId }
     );
@@ -113,7 +99,7 @@ export const sessionService = {
    * DELETE /api/sessions/:id/participants/:userId
    */
   removeUserFromSession: (sessionId: string, userId: string) => {
-    return apiClient.delete<{ message: string; attendees: string[] }>( // Returns array of ObjectIds
+    return apiClient.delete<{ message: string; attendees: string[] }>(
       `/sessions/${sessionId}/participants/${userId}`
     );
   },
@@ -176,3 +162,4 @@ export const sessionService = {
     return apiClient.get<TSession[]>('/sessions/past');
   },
 };
+

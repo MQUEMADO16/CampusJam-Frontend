@@ -20,6 +20,7 @@ import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
 import FriendsList from './pages/profile/Connections';
+import MySessions from './pages/sessions/MySessions';
 
 function App() {
   return (
@@ -68,7 +69,7 @@ function App() {
             />
             <Route
               path="my-sessions"
-              element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
+              element={<MySessions />}
             />
             <Route
               path="connections"
