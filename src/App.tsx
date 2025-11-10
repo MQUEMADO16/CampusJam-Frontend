@@ -21,6 +21,7 @@ import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
 import FriendsList from './pages/profile/Connections';
 import MySessions from './pages/sessions/MySessions';
+import CreateSession from './pages/sessions/CreateSession';
 
 function App() {
   return (
@@ -78,6 +79,10 @@ function App() {
             <Route 
               path="profile/:userId"
               element={<UserProfile />}
+            />
+            <Route 
+              path="sessions/create"
+              element={<CreateSession />}
             />
           </Route>
         </Route>
