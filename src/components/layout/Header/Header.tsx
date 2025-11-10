@@ -299,6 +299,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
               <Button
                 type="primary"
                 onClick={() => handleNavigate('/signup')}
+                style={{
+                  background: 'linear-gradient(to right, #D10A50, #402579)',
+                  borderColor: 'transparent',
+                }}
               >
                 Sign Up
               </Button>
