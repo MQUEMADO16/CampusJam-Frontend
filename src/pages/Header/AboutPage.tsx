@@ -35,7 +35,7 @@ const AboutPage: React.FC = () => {
               Our Mission
             </Title>
             
-            <Divider style={{ margin: '8px 0' }} />
+            <Divider style={{ margin: '8px 0', background: '#aaaaaa', height: '1px' }} />
 
             <Paragraph style={{ fontSize: '1.15rem', lineHeight: 1.6 }}>
               CampusJam is where college musicians unite. Our mission
