@@ -121,7 +121,6 @@ const Login: React.FC = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // --- Logic Implementation ---
   const handleFinish = async (values: any) => {
     setLoading(true);
     try {
@@ -131,6 +130,9 @@ const Login: React.FC = () => {
         password: values.password,
       });
 
+      // Clear any previous form errors on success
+      form.setFields([{ name: 'password', errors: [] }]);
+
       // Update global auth state
       contextLogin(user, token);
 
@@ -139,12 +141,30 @@ const Login: React.FC = () => {
       navigate('/my-sessions');
 
     } catch (error) {
-      // Show the error message from the service
+      let errorMessage = 'An unknown error occurred.';
       if (error instanceof Error) {
-        message.error(error.message);
-      } else {
-        message.error('An unknown error occurred.');
+        errorMessage = error.message;
       }
+
+      // Check if the error is a credential error (you may need to adjust these strings)
+      const isCredentialError =
+        errorMessage.toLowerCase().includes('invalid') ||
+        errorMessage.toLowerCase().includes('not found') ||
+        errorMessage.toLowerCase().includes('incorrect password');
+
+      if (isCredentialError) {
+        // Set the error directly on the password field
+        form.setFields([
+          {
+            name: 'password', // The field to add the error to
+            errors: ['Incorrect email or password. Please try again.'], // The message
+          },
+        ]);
+      } else {
+        // For other errors (e.g., server down), use the toast message
+        message.error(errorMessage);
+      }
+
     } finally {
       // Stop the loading spinner
       setLoading(false);
@@ -212,7 +232,7 @@ const Login: React.FC = () => {
             </Form.Item>
           </ConfigProvider>
 
-          <Form.Item style={{ marginBottom: 20 }}>
+          <Form.Item style={{ marginBottom: 20, marginTop: '35px' }}>
             <GradientButton
               type="primary"
               htmlType="submit"
@@ -227,7 +247,6 @@ const Login: React.FC = () => {
           <div style={{ textAlign: 'center', marginTop: 15 }}>
             <Text type="secondary" style={{ fontSize: '14px' }}>
               Don’t have an account?{' '}
-              {/* Use <Link> instead of <a> for client-side routing */}
               <Link to="/signup" style={{ color: '#2575fc', fontWeight: 'bold' }}>
                 Register Now
               </Link>
