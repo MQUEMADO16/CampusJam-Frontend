@@ -15,16 +15,13 @@ const { Title, Text } = Typography;
 // --- Styled Components ---
 
 const PageWrapper = styled.div`
-  // --- This is the Negative Margin Fix ---
-  // Assumes MainLayout padding is { top: 24, left: 48, right: 48 }
-  margin-top: -24px;
+  margin-top: -48px;
   margin-left: -48px;
   margin-right: -48px;
-  // --- End Fix ---
 
   background-image: url(${homeBg});
   background-size: cover;
-  background-position: center;
+  background-position: center 5%;
   background-repeat: no-repeat;
   background-attachment: fixed;
   color: white;
