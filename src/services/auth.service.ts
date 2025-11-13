@@ -18,6 +18,12 @@ interface AuthResponse {
   user: TUser;
 }
 
+// --- ADDED THIS ---
+// Type for the response from our /auth/google-url endpoint
+interface GoogleAuthUrlResponse {
+  url: string;
+}
+
 /**
  * Logs the user in by calling the /auth/login endpoint.
  * On success, it stores the JWT in localStorage.
@@ -95,12 +101,42 @@ const getStoredUser = (): TUser | null => {
   }
 };
 
+const getGoogleAuthUrl = async (): Promise<string> => {
+  try {
+    // apiClient will automatically send the 'authToken' header
+    const response = await apiClient.get<GoogleAuthUrlResponse>('/auth/google-url');
+    
+    // The response is { url: '...' }, so we just return the string
+    return response.data.url; 
+
+  } catch (error) {
+    let errorMessage = 'An unexpected error occurred trying to link Google.';
+
+    if (isAxiosError(error)) {
+      if (error.response && error.response.data && error.response.data.message) {
+        // This will catch the 'User not authenticated' message
+        errorMessage = error.response.data.message;
+      } else if (error.request) {
+        errorMessage = 'Cannot connect to the server.';
+      } else {
+        errorMessage = error.message;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    console.error('Failed to get Google Auth URL:', errorMessage, error);
+    throw new Error(errorMessage);
+  }
+};
+
 // Export all auth-related methods as a single service object.
 const AuthService = {
   login,
   logout,
   getToken,
   getStoredUser,
+  getGoogleAuthUrl,
 };
 
 export default AuthService;

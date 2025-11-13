@@ -23,6 +23,7 @@ import { TUser } from '../../types';
 import AccessDenied from '../AccessDenied';
 
 import { INSTRUMENT_OPTIONS, GENRE_OPTIONS, SKILL_LEVEL_OPTIONS } from '../../constants/appData';
+import AuthService from '../../services/auth.service';
 
 const { Title, Text } = Typography;
 
@@ -46,6 +47,27 @@ const UserProfileSettings: React.FC = () => {
   } = useAuth();
   
   const [isSaving, setIsSaving] = useState(false);
+
+// --- 2. ADDED THIS HANDLER FUNCTION ---
+  const handleLinkGoogle = async () => {
+    try {
+      message.loading('Redirecting to Google...', 0); // Show loading
+      
+      // 1. Call your service function
+      const googleUrl = await AuthService.getGoogleAuthUrl();
+      
+      // 2. Redirect the user's browser to the URL
+      window.location.href = googleUrl;
+
+    } catch (error) {
+      message.destroy(); // Remove loading message
+      let msg = 'Failed to link Google account.';
+      if (error instanceof Error) {
+        msg = error.message;
+      }
+      message.error(msg);
+    }
+  };
 
   // --- Handle Auth Loading State ---
   if (authIsLoading) {
@@ -215,6 +237,16 @@ const UserProfileSettings: React.FC = () => {
               </Space>
             </Form.Item>
           </Form>
+          <Divider />
+          <Title level={4}>Connected Services</Title>
+          <Text type="secondary">
+            Connect your account to other services to sync your activity.
+          </Text>
+          <div style={{ marginTop: '16px' }}>
+            <Button onClick={handleLinkGoogle}>
+              Link Google Calendar
+            </Button>
+          </div>
         </Card>
       </Col>
     </Row>

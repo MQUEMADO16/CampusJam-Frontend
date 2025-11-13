@@ -20,6 +20,7 @@ import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
 import FriendsList from './pages/profile/Connections';
+import MyCalendarPage from './pages/calendar/MyCalendarPage';
 
 function App() {
   return (
@@ -78,6 +79,9 @@ function App() {
               path="profile/:userId"
               element={<UserProfile />}
             />
+            <Route 
+              path="calendar" 
+              element={<MyCalendarPage />} />
           </Route>
         </Route>
 
