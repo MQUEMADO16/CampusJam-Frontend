@@ -79,6 +79,9 @@ const SignUpForm: React.FC = () => {
     };
 
     try {
+      // Clear any previous server-side errors on a new attempt
+      form.setFields([{ name: 'email', errors: [] }]);
+
       await userService.createUser(userData);
 
       // Handle success
@@ -95,7 +98,26 @@ const SignUpForm: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      message.error(errorMessage);
+
+      // Check if the error is a duplicate email error.
+      // This string comes from your backend's `createUser` controller.
+      const isDuplicateEmail =
+        errorMessage.toLowerCase().includes('user already exists') ||
+        errorMessage.toLowerCase().includes('email already in use');
+
+      if (isDuplicateEmail) {
+        // Set the error directly on the email field
+        form.setFields([
+          {
+            name: 'email',
+            errors: ['This email is already registered. Please log in or use a different email.'],
+          },
+        ]);
+      } else {
+        // For all other errors (e.g., server down), use the toast.
+        message.error(errorMessage);
+      }
+      
     } finally {
       setLoading(false); // Stop the loading spinner
     }
@@ -280,18 +302,31 @@ const SignUpForm: React.FC = () => {
       </Row>
 
       <Form.Item>
-        <Space>
-          <Button htmlType="button" onClick={() => form.resetFields()}>
-            Reset
-          </Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={loading}
-          >
-            Create Account
-          </Button>
-        </Space>
+        <Row justify="space-between" align="middle">
+          <Col>
+            <Space>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+              >
+                Create Account
+              </Button>
+              <Button htmlType="button" onClick={() => form.resetFields()}>
+                Reset
+              </Button>
+            </Space>
+          </Col>
+          <Col>
+            <Button
+              htmlType="button"
+              danger
+              onClick={() => navigate('/')}
+            >
+              Cancel
+            </Button>
+          </Col>
+        </Row>
       </Form.Item>
     </Form>
   );
