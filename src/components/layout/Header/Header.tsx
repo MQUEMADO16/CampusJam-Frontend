@@ -44,6 +44,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, logout } = useAuth();
+  const logoDestination = user ? '/my-sessions' : '/';
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
@@ -56,10 +57,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
       cancelText: 'Cancel',
       width: 400, // Adjusted width
       onOk: () => {
-        logout();
-        navigate('/');
-        messageApi.success('Logged out successfully.');
-        setIsDropdownOpen(false);
+        navigate('/', {
+          replace: true, // Use replace to prevent going back to the logged-in state
+          state: {
+            alert: { type: 'success', text: 'You have been logged out.' }
+          }
+        });
+        setTimeout(() => {
+          logout();
+          messageApi.success('Logged out successfully.');
+          setIsDropdownOpen(false);
+        }, 50);
       },
       onCancel: () => {
         setIsDropdownOpen(false);
@@ -206,7 +214,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
         }}
       >
         {/* Logo Section (Always visible) */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to={logoDestination} style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>
             <img
               src={logoSrc}
