@@ -11,24 +11,27 @@ import {
   Card,
   Row,
   Col,
+  Table,
+  Tag,
 } from 'antd';
 import { isAxiosError } from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import type { ColumnsType } from 'antd/es/table';
 
 import { sessionService, TSessionFeed } from '../../services/session.service';
 import SessionCard from '../../components/features/SessionCard';
 import { useAuth } from '../../context/auth.context';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 /**
  * A helper component to render a list of session cards.
  * We use this to avoid duplicating the <List> logic for both tabs.
  */
-const SessionList: React.FC<{ sessions: TSessionFeed[] }> = ({ sessions }) => {
-  const navigate = useNavigate();
-
+const SessionList: React.FC<{ sessions: TSessionFeed[]; emptyView: React.ReactNode }> = ({
+  sessions,
+  emptyView,
+}) => {
   return (
     <List
       dataSource={sessions}
@@ -42,19 +45,7 @@ const SessionList: React.FC<{ sessions: TSessionFeed[] }> = ({ sessions }) => {
         xxl: 4,
       }}
       locale={{
-        emptyText: (
-          <Empty
-            description={
-              <Title level={4} type="secondary">
-                No sessions found.
-              </Title>
-            }
-          >
-            <Button type="primary" onClick={() => navigate('/sessions/create')}>
-              Create a Session
-            </Button>
-          </Empty>
-        ),
+        emptyText: emptyView,
       }}
       renderItem={(session) => (
         <List.Item>
@@ -77,14 +68,91 @@ const MySessions: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Get auth state to ensure user is loaded before fetching
   const { user: currentUser, isLoading: authIsLoading } = useAuth();
-
-  // State for the Card/Table view toggle
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const navigate = useNavigate();
+
+  const baseColumns: ColumnsType<TSessionFeed> = [
+    {
+      title: 'Session',
+      dataIndex: 'title',
+      key: 'title',
+      render: (title: string, session) => (
+        <Link to={`/sessions/${session._id}`}>
+          <Text strong style={{ color: '#1677ff' }}>{title}</Text>
+        </Link>
+      ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        let color = 'default';
+        if (status === 'Scheduled') color = 'blue';
+        if (status === 'Ongoing') color = 'green';
+        if (status === 'Cancelled') color = 'red';
+        return <Tag color={color}>{status || 'Scheduled'}</Tag>;
+      },
+    },
+    {
+      title: 'When',
+      dataIndex: 'startTime',
+      key: 'startTime',
+      render: (startTime: string) => new Date(startTime).toLocaleString(),
+      responsive: ['md'], // Hides on small screens
+    },
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      responsive: ['lg'], // Hides on medium/small screens
+    },
+  ];
+
+  const hostedColumns: ColumnsType<TSessionFeed> = [
+    ...baseColumns,
+    {
+      title: 'Attendees',
+      dataIndex: 'attendees',
+      key: 'attendees',
+      render: (attendees: string[]) => attendees.length,
+      responsive: ['sm'],
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, session) => (
+        <Link to={`/sessions/${session._id}`}>
+          <Button type="link" size="small">Manage</Button>
+        </Link>
+      ),
+    },
+  ];
+
+  const joinedColumns: ColumnsType<TSessionFeed> = [
+    ...baseColumns,
+    {
+      title: 'Host',
+      dataIndex: 'host',
+      key: 'host',
+      render: (host: TSessionFeed['host']) => (
+        <Link to={`/profile/${host?._id}`}>{host?.name || 'N/A'}</Link>
+      ),
+      responsive: ['sm'],
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, session) => (
+        <Link to={`/sessions/${session._id}`}>
+          <Button type="link" size="small">View</Button>
+        </Link>
+      ),
+    },
+  ];
 
   useEffect(() => {
-    // Don't fetch until the auth check is complete
     if (authIsLoading) {
       return;
     }
@@ -101,8 +169,6 @@ const MySessions: React.FC = () => {
 
         const response = await sessionService.getUserSessions();
         
-        // Populate both state arrays from the single response,
-        // using fallbacks to ensure they are always arrays.
         setHostedSessions(response.data.hostedSessions || []);
         setJoinedSessions(response.data.joinedSessions || []);
 
@@ -119,7 +185,7 @@ const MySessions: React.FC = () => {
     };
 
     fetchUserSessions();
-  }, [currentUser, authIsLoading]); // Re-run if auth state changes
+  }, [currentUser, authIsLoading]);
 
   if (authIsLoading || isLoading) {
     return (
@@ -133,6 +199,61 @@ const MySessions: React.FC = () => {
     return <Alert message="Error" description={error} type="error" showIcon />;
   }
 
+  const customEmptyView = (
+    <Empty
+      description={
+        <Title level={4} type="secondary">
+          No sessions found.
+        </Title>
+      }
+    >
+      <Button type="primary" onClick={() => navigate('/sessions/create')}>
+        Create a Session
+      </Button>
+    </Empty>
+  );
+
+  const hostedContent = (
+    viewMode === 'card' ? (
+      <SessionList sessions={hostedSessions} emptyView={customEmptyView} />
+    ) : (
+      <Table
+        dataSource={hostedSessions}
+        columns={hostedColumns}
+        rowKey="_id"
+        locale={{ emptyText: customEmptyView }}
+        pagination={{ pageSize: 10, showSizeChanger: false }}
+      />
+    )
+  );
+
+  const joinedContent = (
+    viewMode === 'card' ? (
+      <SessionList sessions={joinedSessions} emptyView={customEmptyView} />
+    ) : (
+      <Table
+        dataSource={joinedSessions}
+        columns={joinedColumns}
+        rowKey="_id"
+        locale={{ emptyText: customEmptyView }}
+        pagination={{ pageSize: 10, showSizeChanger: false }}
+      />
+    )
+  );
+
+  const tabItems = [
+    {
+      label: `Hosted Sessions (${hostedSessions.length})`,
+      key: '1',
+      children: hostedContent,
+    },
+    {
+      label: `Joined Sessions (${joinedSessions.length})`,
+      key: '2',
+      children: joinedContent,
+    },
+  ];
+
   return (
     <Card style={{ borderRadius: '16px' }}>
       <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
@@ -142,35 +263,21 @@ const MySessions: React.FC = () => {
           </Title>
         </Col>
         <Col>
-          {/* This is the placeholder for the view switcher */}
           <Radio.Group
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value)}
           >
             <Radio.Button value="card">Card View</Radio.Button>
-            <Radio.Button value="table" disabled>Table View</Radio.Button>
+            <Radio.Button value="table">Table View</Radio.Button>
           </Radio.Group>
         </Col>
       </Row>
 
-      {/* Use AntD's Tabs to separate Hosted and Joined sessions */}
-      <Tabs defaultActiveKey="1">
-        <TabPane
-          tab={`Hosted Sessions (${hostedSessions.length})`}
-          key="1"
-        >
-          {/* We only render the list if viewMode is 'card' */}
-          {viewMode === 'card' && <SessionList sessions={hostedSessions} />}
-          {viewMode === 'table' && <Text>Table view coming soon!</Text>}
-        </TabPane>
-        <TabPane
-          tab={`Joined Sessions (${joinedSessions.length})`}
-          key="2"
-        >
-          {viewMode === 'card' && <SessionList sessions={joinedSessions} />}
-          {viewMode === 'table' && <Text>Table view coming soon!</Text>}
-        </TabPane>
-      </Tabs>
+      <Tabs 
+        defaultActiveKey="1"
+        items={tabItems}
+      />
+      
     </Card>
   );
 };
