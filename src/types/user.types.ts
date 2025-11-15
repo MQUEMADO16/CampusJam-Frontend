@@ -56,6 +56,7 @@ export type TUser = {
   integrations: TUserIntegrations;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
+  isGoogleLinked?: boolean;
 };
 
 export type TCreateUserData = Pick<TUser, 'name' | 'email' | 'dateOfBirth' | 'campus'> & {

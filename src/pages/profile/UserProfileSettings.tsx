@@ -13,6 +13,7 @@ import {
   Space,
   message,
 } from 'antd';
+import { CheckCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
@@ -48,15 +49,15 @@ const UserProfileSettings: React.FC = () => {
   
   const [isSaving, setIsSaving] = useState(false);
 
-// --- 2. ADDED THIS HANDLER FUNCTION ---
+//ADDED THIS HANDLER FUNCTION ---
   const handleLinkGoogle = async () => {
     try {
       message.loading('Redirecting to Google...', 0); // Show loading
       
-      // 1. Call your service function
+      // Call service function
       const googleUrl = await AuthService.getGoogleAuthUrl();
       
-      // 2. Redirect the user's browser to the URL
+      //Redirect the user's browser to the URL
       window.location.href = googleUrl;
 
     } catch (error) {
@@ -242,10 +243,18 @@ const UserProfileSettings: React.FC = () => {
           <Text type="secondary">
             Connect your account to other services to sync your activity.
           </Text>
+
+          {/* --- 2. THIS IS THE CHANGED LOGIC --- */}
           <div style={{ marginTop: '16px' }}>
-            <Button onClick={handleLinkGoogle}>
-              Link Google Calendar
-            </Button>
+            {currentUser && currentUser.isGoogleLinked ? (
+              <Button type="primary" disabled icon={<CheckCircleOutlined />}>
+                Calendar Linked
+              </Button>
+            ) : (
+              <Button onClick={handleLinkGoogle}>
+                Link Google Calendar
+              </Button>
+            )}
           </div>
         </Card>
       </Col>
