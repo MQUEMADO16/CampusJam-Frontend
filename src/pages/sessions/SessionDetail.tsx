@@ -12,6 +12,7 @@ import {
   Spin,
   List,
   Descriptions,
+  message,
 } from 'antd';
 import {
   UserOutlined,
@@ -27,6 +28,7 @@ import { isAxiosError } from 'axios';
 
 // --- Import Services, Context, and Types ---
 import { sessionService } from '../../services/session.service';
+import { calendarService } from '../../services/calendar.service';
 import { useAuth } from '../../context/auth.context';
 import { TSession, TUser } from '../../types';
 
@@ -53,6 +55,8 @@ const StatusTag: React.FC<{ status: TSession['status'] }> = ({ status }) => {
       return <Tag>{status}</Tag>;
   }
 };
+
+
 
 // The error indicates the API returns a TSession with 'invitedUsers' populated.
 // We'll create a local type for this to use in our state.
@@ -106,6 +110,31 @@ const SessionDetail: React.FC = () => {
     fetchSession();
   }, [sessionId, navigate]);
 
+const handleAddToCalendar = async () => {
+    if (!session) {
+      message.error('Session data not loaded yet.');
+      return;
+    }
+
+    message.loading('Adding to your calendar...', 0);
+
+    try {
+      // Call our new service function
+      const response = await calendarService.addSessionToCalendar(session._id);
+      
+      message.destroy(); // Remove loading message
+      message.success(response.message); // Show success message from backend
+
+    } catch (err: any) {
+      message.destroy(); // Remove loading message
+      let msg = 'Failed to add event.';
+      if (err.response?.data?.message) {
+        msg = err.response.data.message; // Show error from backend
+      }
+      message.error(msg);
+    }
+  };
+
   // --- Render Logic ---
 
   if (authIsLoading || isLoading) {
@@ -154,6 +183,11 @@ const SessionDetail: React.FC = () => {
                 ) : (
                   <Button type="primary" icon={<CheckCircleOutlined />}>
                     Join Session
+                  </Button>
+                )}
+                {!isHost && (
+                  <Button icon={<CalendarOutlined />} onClick={handleAddToCalendar}>
+                    Add to Calendar
                   </Button>
                 )}
               </Space>

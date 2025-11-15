@@ -4,7 +4,7 @@ import axios from 'axios';
 import { TUser, TSession, TMessage, TReport } from '../types';
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_CAMPUS_JAM_API_URL,
+  baseURL: 'http://localhost:3000/api', //HARD CODED
   headers: {
     'Content-Type': 'application/json',
   },
