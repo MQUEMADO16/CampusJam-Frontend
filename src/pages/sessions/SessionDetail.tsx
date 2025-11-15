@@ -243,6 +243,9 @@ const SessionDetail: React.FC = () => {
                 <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
                   {session.location || 'Not specified'}
                 </Descriptions.Item>
+                <Descriptions.Item label={<Space><EnvironmentOutlined /> Address</Space>}>
+                  {session.address || 'Not specified'}
+                </Descriptions.Item>
                 <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
                   <Tag>{session.genre || 'Any'}</Tag>
                 </Descriptions.Item>
