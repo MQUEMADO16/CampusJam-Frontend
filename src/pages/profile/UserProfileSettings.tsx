@@ -108,7 +108,7 @@ const UserProfileSettings: React.FC = () => {
   };
 
   return (
-    <Row justify="center" style={{ padding: '24px 0' }}>
+    <Row justify="center" style={{ padding: '16px 0' }}>
       <Col xs={24} md={20} lg={16} xl={12}>
         <Card style={{ width: '100%', borderRadius: '16px' }}>
           <Title level={2}>Edit Your Profile</Title>
@@ -124,7 +124,7 @@ const UserProfileSettings: React.FC = () => {
             initialValues={initialFormValues}
             requiredMark="optional"
           >
-            <Title level={4}>Account</Title>
+            <Title level={4} style={{ marginBottom: 16 }}>Account</Title>
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
@@ -149,11 +149,13 @@ const UserProfileSettings: React.FC = () => {
               </Col>
             </Row>
 
-            <Divider />
-
-            <Title level={4}>Musician Profile</Title>
-            <Form.Item name="bio" label="About Me (Bio)">
-              <Input.TextArea rows={4} placeholder="Tell everyone a bit about yourself..." />
+            <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>Musician Profile</Title>
+            <Form.Item 
+              name="bio" 
+              label="About Me (Bio)"
+              style={{ marginBottom: 16 }}
+            >
+              <Input.TextArea rows={3} placeholder="Tell everyone a bit about yourself..." />
             </Form.Item>
 
             <Row gutter={16}>
@@ -191,6 +193,7 @@ const UserProfileSettings: React.FC = () => {
               name="skillLevel"
               label="Skill Level"
               rules={[{ required: true, message: 'Select your level' }]}
+              style={{ marginBottom: 8 }}
             >
               <Select
                 placeholder="Choose one"
@@ -198,9 +201,7 @@ const UserProfileSettings: React.FC = () => {
               />
             </Form.Item>
 
-            <Divider />
-
-            <Form.Item>
+            <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
               <Space>
                 <Button
                   type="primary"
