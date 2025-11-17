@@ -3,7 +3,6 @@ import {
   Button,
   Checkbox,
   Col,
-  DatePicker,
   Form,
   Input,
   Radio,
@@ -16,14 +15,62 @@ import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { userService } from '../../services/user.service';
 import { TCreateUserData } from '../../types';
-import { Moment } from 'moment';
+import moment, { Moment } from 'moment';
 
-// 1. Import your global constants
 import {
   INSTRUMENT_OPTIONS,
   GENRE_OPTIONS,
   SKILL_LEVEL_OPTIONS,
 } from '../../constants/appData';
+
+import { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker';
+
+interface MuiDatePickerWrapperProps {
+  value?: Moment;
+  onChange?: (value: Moment | null) => void;
+  shouldDisableDate: (date: Dayjs) => boolean;
+}
+
+const AntdMuiDatePicker: React.FC<MuiDatePickerWrapperProps> = ({
+  value,
+  onChange,
+  shouldDisableDate,
+}) => {
+  const dayjsValue = value ? dayjs(value.toDate()) : null;
+
+  const handleChange = (newValue: Dayjs | null) => {
+    if (onChange) {
+      onChange(newValue ? moment(newValue.toDate()) : null);
+    }
+  };
+
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <MuiDatePicker
+        label="Date of Birth"
+        value={dayjsValue}
+        onChange={handleChange}
+        shouldDisableDate={shouldDisableDate}
+        views={['year', 'month', 'day']}
+        openTo="year"
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            variant: 'outlined',
+            size: 'small', // This (40px) matches antd size="large"
+          },
+          popper: {
+            style: { zIndex: 9999 },
+          },
+        }}
+      />
+    </LocalizationProvider>
+  );
+};
 
 const PASSWORD_RULE =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[ !"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]).{8,}$/;
@@ -34,12 +81,11 @@ function isUnderAgeLimit(date: Date, minYears = 13): boolean {
   return date > cutoff;
 }
 
-// Define the shape of the form values for clarity
 interface SignUpFormValues {
   name: string;
   email: string;
   password: string;
-  dateOfBirth: Moment; // AntD DatePicker uses Moment.js objects
+  dateOfBirth: Moment;
   subscriptionTier: 'basic' | 'pro';
   instruments: string[];
   genres: string[];
@@ -52,25 +98,17 @@ const SignUpForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  /**
-   * Handles form submission, calls the user service, and manages responses.
-   */
   const onFinish = async (values: SignUpFormValues) => {
     setLoading(true);
 
     const userData: TCreateUserData = {
-      // Core fields
       name: values.name,
       email: values.email,
       password: values.password,
       dateOfBirth: values.dateOfBirth.toISOString(),
-
-      // Nested subscription object
       subscription: {
         tier: values.subscriptionTier,
       },
-
-      // Nested profile object
       profile: {
         instruments: values.instruments,
         genres: values.genres,
@@ -79,17 +117,14 @@ const SignUpForm: React.FC = () => {
     };
 
     try {
-      // Clear any previous server-side errors on a new attempt
       form.setFields([{ name: 'email', errors: [] }]);
 
       await userService.createUser(userData);
 
-      // Handle success
       message.success('Account created successfully! Please log in.');
-      navigate('/login'); // Redirect to login page
+      navigate('/login');
 
     } catch (error) {
-      // Handle errors
       let errorMessage = 'Failed to create account.';
       if (isAxiosError(error)) {
         if (error.response?.data?.message) {
@@ -99,14 +134,11 @@ const SignUpForm: React.FC = () => {
         errorMessage = error.message;
       }
 
-      // Check if the error is a duplicate email error.
-      // This string comes from your backend's `createUser` controller.
       const isDuplicateEmail =
         errorMessage.toLowerCase().includes('user already exists') ||
         errorMessage.toLowerCase().includes('email already in use');
 
       if (isDuplicateEmail) {
-        // Set the error directly on the email field
         form.setFields([
           {
             name: 'email',
@@ -114,12 +146,11 @@ const SignUpForm: React.FC = () => {
           },
         ]);
       } else {
-        // For all other errors (e.g., server down), use the toast.
         message.error(errorMessage);
       }
       
     } finally {
-      setLoading(false); // Stop the loading spinner
+      setLoading(false);
     }
   };
 
@@ -146,7 +177,7 @@ const SignUpForm: React.FC = () => {
               { min: 2, message: 'Name must be at least 2 characters' },
             ]}
           >
-            <Input placeholder="John Doe" />
+            <Input placeholder="John Doe" size="large" />
           </Form.Item>
         </Col>
 
@@ -159,7 +190,7 @@ const SignUpForm: React.FC = () => {
               { type: 'email', message: 'Enter a valid email' },
             ]}
           >
-            <Input placeholder="john@example.com" inputMode="email" />
+            <Input placeholder="john@example.com" inputMode="email" size="large" />
           </Form.Item>
         </Col>
 
@@ -176,7 +207,7 @@ const SignUpForm: React.FC = () => {
             ]}
             hasFeedback
           >
-            <Input.Password placeholder="Create a strong password" />
+            <Input.Password placeholder="Create a strong password" size="large" />
           </Form.Item>
         </Col>
 
@@ -198,20 +229,19 @@ const SignUpForm: React.FC = () => {
               }),
             ]}
           >
-            <Input.Password placeholder="Re-enter password" />
+            <Input.Password placeholder="Re-enter password" size="large" />
           </Form.Item>
         </Col>
 
         <Col xs={24} md={12}>
           <Form.Item
-            label="Date of Birth"
             name="dateOfBirth"
             rules={[{ required: true, message: 'Please select your DOB' }]}
+            style={{ marginTop: '8px' }}
           >
-            <DatePicker
-              style={{ width: '100%' }}
-              disabledDate={(moment) =>
-                moment ? isUnderAgeLimit(moment.toDate(), 13) : false
+            <AntdMuiDatePicker
+              shouldDisableDate={(dayjsObj) =>
+                dayjsObj ? isUnderAgeLimit(dayjsObj.toDate(), 13) : false
               }
             />
           </Form.Item>
@@ -241,6 +271,7 @@ const SignUpForm: React.FC = () => {
               allowClear
               placeholder="Select instruments"
               options={INSTRUMENT_OPTIONS}
+              size="large"
             />
           </Form.Item>
         </Col>
@@ -256,6 +287,7 @@ const SignUpForm: React.FC = () => {
               allowClear
               placeholder="Select genres"
               options={GENRE_OPTIONS}
+              size="large"
             />
           </Form.Item>
         </Col>
@@ -269,6 +301,7 @@ const SignUpForm: React.FC = () => {
             <Select
               placeholder="Choose one"
               options={SKILL_LEVEL_OPTIONS}
+              size="large"
             />
           </Form.Item>
         </Col>
