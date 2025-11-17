@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Grid, ConfigProvider } from 'antd';
+import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd'; // Added Button
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomerServiceOutlined, // For "Browse Sessions"
   UserOutlined, // For "My Sessions"
   TeamOutlined, // For "My Connections"
+  PlusOutlined, // For "Create Session"
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
 
@@ -57,6 +58,23 @@ const DashboardLayout: React.FC = () => {
             borderRight: '1px solid #f0f0f0',
           }}
         >
+          <div style={{ padding: '16px' }}>
+            <Button
+              type="primary"
+              block
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/sessions/create')}
+              style={{
+                background: 'linear-gradient(to right, #D10A50, #402579)',
+                borderColor: 'transparent',
+                fontWeight: 600,
+                overflow: 'hidden',
+              }}
+            >
+              {!collapsed && 'Create Session'}
+            </Button>
+          </div>
+
           <ConfigProvider
             theme={{
               components: {
@@ -76,7 +94,7 @@ const DashboardLayout: React.FC = () => {
               onClick={({ key }) => navigate(key)}
               items={sidebarItems}
               style={{
-                marginTop: '24px',
+                marginTop: '0px', // Adjusted from 24px to sit below button
                 borderRight: 'none',
               }}
             />
