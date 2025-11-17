@@ -28,6 +28,15 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const muiTheme = createTheme({
+  palette: {
+    primary: {
+      main: '#D10A50', // Your antd colorPrimary
+    },
+  },
+});
 
 interface MuiDatePickerWrapperProps {
   value?: Moment;
@@ -49,26 +58,28 @@ const AntdMuiDatePicker: React.FC<MuiDatePickerWrapperProps> = ({
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <MuiDatePicker
-        label="Date of Birth"
-        value={dayjsValue}
-        onChange={handleChange}
-        shouldDisableDate={shouldDisableDate}
-        views={['year', 'month', 'day']}
-        openTo="year"
-        slotProps={{
-          textField: {
-            fullWidth: true,
-            variant: 'outlined',
-            size: 'small', // This (40px) matches antd size="large"
-          },
-          popper: {
-            style: { zIndex: 9999 },
-          },
-        }}
-      />
-    </LocalizationProvider>
+    <ThemeProvider theme={muiTheme}>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <MuiDatePicker
+          label="Date of Birth"
+          value={dayjsValue}
+          onChange={handleChange}
+          shouldDisableDate={shouldDisableDate}
+          views={['year', 'month', 'day']}
+          openTo="year"
+          slotProps={{
+            textField: {
+              fullWidth: true,
+              variant: 'outlined',
+              size: 'small',
+            },
+            popper: {
+              style: { zIndex: 9999 },
+            },
+          }}
+        />
+      </LocalizationProvider>
+    </ThemeProvider>
   );
 };
 
