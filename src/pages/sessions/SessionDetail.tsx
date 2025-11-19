@@ -31,6 +31,7 @@ import { isAxiosError } from 'axios';
 
 // --- Import Services, Context, and Types ---
 import { sessionService } from '../../services/session.service';
+import { calendarService } from '../../services/calendar.service';
 import { useAuth } from '../../context/auth.context';
 import { TSession, TUser } from '../../types';
 
@@ -148,6 +149,31 @@ const SessionDetail: React.FC = () => {
   };
 
 
+const handleAddToCalendar = async () => {
+    if (!session) {
+      message.error('Session data not loaded yet.');
+      return;
+    }
+
+    message.loading('Adding to your calendar...', 0);
+
+    try {
+      // Call our new service function
+      const response = await calendarService.addSessionToCalendar(session._id);
+      
+      message.destroy(); // Remove loading message
+      message.success(response.message); // Show success message from backend
+
+    } catch (err: any) {
+      message.destroy(); // Remove loading message
+      let msg = 'Failed to add event.';
+      if (err.response?.data?.message) {
+        msg = err.response.data.message; // Show error from backend
+      }
+      message.error(msg);
+    }
+  };
+
   // --- Render Logic ---
 
   if (authIsLoading || isLoading) {
@@ -205,6 +231,11 @@ const SessionDetail: React.FC = () => {
                     loading={joinLoading}
                   >
                     Join Session
+                  </Button>
+                )}
+                {!isHost && (
+                  <Button icon={<CalendarOutlined />} onClick={handleAddToCalendar}>
+                    Add to Calendar
                   </Button>
                 )}
               </Space>

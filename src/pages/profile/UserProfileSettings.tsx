@@ -13,6 +13,7 @@ import {
   Space,
   message,
 } from 'antd';
+import { CheckCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
@@ -23,6 +24,7 @@ import { TUser } from '../../types';
 import AccessDenied from '../AccessDenied';
 
 import { INSTRUMENT_OPTIONS, GENRE_OPTIONS, SKILL_LEVEL_OPTIONS } from '../../constants/appData';
+import AuthService from '../../services/auth.service';
 
 const { Title, Text } = Typography;
 
@@ -46,6 +48,27 @@ const UserProfileSettings: React.FC = () => {
   } = useAuth();
   
   const [isSaving, setIsSaving] = useState(false);
+
+//ADDED THIS HANDLER FUNCTION ---
+  const handleLinkGoogle = async () => {
+    try {
+      message.loading('Redirecting to Google...', 0); // Show loading
+      
+      // Call service function
+      const googleUrl = await AuthService.getGoogleAuthUrl();
+      
+      //Redirect the user's browser to the URL
+      window.location.href = googleUrl;
+
+    } catch (error) {
+      message.destroy(); // Remove loading message
+      let msg = 'Failed to link Google account.';
+      if (error instanceof Error) {
+        msg = error.message;
+      }
+      message.error(msg);
+    }
+  };
 
   // --- Handle Auth Loading State ---
   if (authIsLoading) {
@@ -216,6 +239,24 @@ const UserProfileSettings: React.FC = () => {
               </Space>
             </Form.Item>
           </Form>
+          <Divider />
+          <Title level={4}>Connected Services</Title>
+          <Text type="secondary">
+            Connect your account to other services to sync your activity.
+          </Text>
+
+          {/* --- 2. THIS IS THE CHANGED LOGIC --- */}
+          <div style={{ marginTop: '16px' }}>
+            {currentUser && currentUser.isGoogleLinked ? (
+              <Button type="primary" disabled icon={<CheckCircleOutlined />}>
+                Calendar Linked
+              </Button>
+            ) : (
+              <Button onClick={handleLinkGoogle}>
+                Link Google Calendar
+              </Button>
+            )}
+          </div>
         </Card>
       </Col>
     </Row>
