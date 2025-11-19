@@ -36,6 +36,7 @@ const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     // The key 'authToken' MUST match the key in your apiClient interceptor.
     if (response.data.token) {
       localStorage.setItem('authToken', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
     }
 
     // Return all data (user object, token, message) to the component/context
@@ -74,6 +75,7 @@ const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
 const logout = () => {
   // Must remove the exact same key.
   localStorage.removeItem('authToken');
+  localStorage.removeItem('user');
   // Can also add logic here to redirect the user:
   // window.location.href = '/login';
 };
