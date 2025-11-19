@@ -6,58 +6,77 @@ const { Footer } = Layout;
 const { Title, Text, Link } = Typography;
 
 const AppFooter: React.FC = () => {
+
+  const footerStyle: React.CSSProperties = {
+    background: '#fff', // Reverted to white background
+    color: '#111827', // Original dark text
+    padding: '3rem 48px',
+    
+    // This mimics the AppHeader's shadow, but on top
+    borderTop: '1px solid #f0f0f0',
+    boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.06)', 
+    // z-index ensures shadow is above content that might scroll "under" it
+    position: 'relative', 
+    zIndex: 1,
+  };
+
+  const titleStyle: React.CSSProperties = {
+    color: '#111827', // Original dark title
+  };
+
+  const linkStyle: React.CSSProperties = {
+    color: '#737373', // Original light grey link
+    fontSize: '1rem',
+  };
+
+  const iconLinkStyle: React.CSSProperties = {
+    color: '#111827', // Original dark icon
+    fontSize: '2rem',
+  };
+
   return (
     <>
-      <Footer style={{ background: '#fff', color: '#111827', paddingTop: '2rem 48px', paddingBottom: '3rem'}}>
+      {/* Apply the static light style with top shadow */}
+      <Footer style={footerStyle}>
         <Row gutter={[48, 48]} justify="center">
-          
-          <Col>
-            <Space/>
-          </Col>
-          <Col>
-            <Space/>
-          </Col>
-          <Col>
-            <Space/>
-          </Col>
 
           {/* Get In Touch */}
           <Col xs={24} sm={12} md={6}>
-            <Title level={4} style={{ color: '#111827'}}>Get In Touch</Title>
-            <Text style={{ color: '#737373', display: 'block', marginBottom: '1rem', fontSize: '1rem'  }}>
+            <Title level={4} style={titleStyle}>Get In Touch</Title>
+            <Text style={{ ...linkStyle, display: 'block', marginBottom: '1rem', color: '#737373' }}>
               CampusJam.Support@gmail.com
             </Text>
             <Space size="middle">
-              <Link href="#" target="_blank" style={{ color: '#111827', fontSize: '2rem' }}>
+              <Link href="#" target="_blank" style={iconLinkStyle}>
                 <FacebookOutlined />
               </Link>
-              <Link href="#" target="_blank" style={{ color: '#111827', fontSize: '2rem' }}>
+              <Link href="#" target="_blank" style={iconLinkStyle}>
                 <InstagramOutlined />
               </Link>
-              <Link href="#" target="_blank" style={{ color: '#111827', fontSize: '2rem' }}>
+              <Link href="#" target="_blank" style={iconLinkStyle}>
                 <TwitterOutlined />
               </Link>
             </Space>
           </Col>
           
 
-          {/* Company Info */}
+          {/* Company Info (Updated links) */}
           <Col xs={24} sm={12} md={5}>
-            <Title level={4} style={{ color: '#111827' }}>Company Info</Title>
+            <Title level={4} style={titleStyle}>Company Info</Title>
             <Space direction="vertical" size="small">
-              <Link href="#" style={{ color: '#737373', fontSize: '1rem' }}>About Us</Link>
-              <Link href="#" style={{ color: '#737373', fontSize: '1rem' }}>FAQ</Link>
-              <Link href="#" style={{ color: '#737373', fontSize: '1rem' }}>Blog</Link>
+              <Link href="/about" style={linkStyle}>About Us</Link>
+              <Link href="/contact" style={linkStyle}>Contact</Link>
+              <Link href="#" style={linkStyle}>Blog</Link>
             </Space>
           </Col>
 
-          {/* Features */}
+          {/* Resources (Updated links) */}
           <Col xs={24} sm={12} md={5}>
-            <Title level={4} style={{ color: '#111827' }}>Features</Title>
+            <Title level={4} style={titleStyle}>Resources</Title>
             <Space direction="vertical" size="small">
-              <Link href="#" style={{ color: '#737373' , fontSize: '1rem'}}>Business Marketing</Link>
-              <Link href="#" style={{ color: '#737373' , fontSize: '1rem'}}>User Analytic</Link>
-              <Link href="#" style={{ color: '#737373' , fontSize: '1rem'}}>Live Chat</Link>
+              <Link href="/pricing" style={linkStyle}>Pricing</Link>
+              <Link href="#" style={linkStyle}>FAQ</Link>
+              <Link href="#" style={linkStyle}>Help Center</Link>
             </Space>
           </Col>
         </Row>

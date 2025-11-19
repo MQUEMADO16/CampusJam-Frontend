@@ -20,7 +20,8 @@ import ContactUs from './pages/Header/ContactPage';
 import Dashboard from './pages/sessions/Dashboard';
 import LandingPage from './pages/Landing/Landing';
 import FriendsList from './pages/profile/Connections';
-import MyCalendarPage from './pages/calendar/MyCalendarPage';
+import MySessions from './pages/sessions/MySessions';
+import CreateSession from './pages/sessions/CreateSession';
 
 function App() {
   return (
@@ -69,7 +70,7 @@ function App() {
             />
             <Route
               path="my-sessions"
-              element={<div>My Sessions Page (Dashboard for joined sessions)</div>}
+              element={<MySessions />}
             />
             <Route
               path="connections"
@@ -80,8 +81,9 @@ function App() {
               element={<UserProfile />}
             />
             <Route 
-              path="calendar" 
-              element={<MyCalendarPage />} />
+              path="sessions/create"
+              element={<CreateSession />}
+            />
           </Route>
         </Route>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Typography, Form, Input, Button, Card, ConfigProvider } from 'antd'; 
+import { Row, Col, Typography, Form, Input, Button, Card, Space } from 'antd'; 
 import { SendOutlined } from '@ant-design/icons';
 import campusJamLogo from '../../assets/images/campus-jam-logo-large.png';
 
@@ -8,7 +8,6 @@ const { TextArea } = Input;
 
 // Colors
 const brandGradient = 'linear-gradient(45deg, #d10a50 0%, #402579 100%)';
-const cardBgColor = '#6c5555ff'; // Can change later.
 
 const ContactPage: React.FC = () => {
   const onFinish = (values: any) => {
@@ -16,31 +15,25 @@ const ContactPage: React.FC = () => {
     // Add email API form submission logic.
   };
 
-  // Custom theme for form items to make labels white
-  const formItemTheme = {
-    token: {
-      colorText: '#e2e8f0', // Label color
-      colorTextSecondary: '#a0aec0', // Subtext/help color
-    },
-  };
-
   return (
-    <Card style={{ background: cardBgColor, border: 'none', borderRadius: '12px' }}>
-      <Row gutter={[48, 32]} align="middle">
+    <div style={{ padding: '2rem 0' }}>
+      <Title level={2} style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        Contact Us
+      </Title>
+      
+      <Row gutter={[32, 32]} align="stretch">
 
         {/* --- Left Column: The Form --- */}
-        <Col xs={24} md={12}>
-          <Title level={3} style={{ color: 'white', marginBottom: '1.5rem' }}>
-            Send us a message
-          </Title>
-          
-          {/* Wrap Form in the ConfigProvider */}
-          <ConfigProvider theme={formItemTheme}>
+        <Col xs={24} md={14} lg={12}>
+          <Card style={{ borderRadius: '12px', height: '100%' }}>
+            <Title level={3} style={{ marginBottom: '1.5rem' }}>
+              Send us a message
+            </Title>
+            
             <Form
               name="contact"
               layout="vertical"
               onFinish={onFinish}
-              // The 'theme' prop is removed from here
               requiredMark={false} 
             >
               <Form.Item
@@ -75,7 +68,7 @@ const ContactPage: React.FC = () => {
                 <TextArea rows={4} placeholder="Hi there, I'd like to talk about..." />
               </Form.Item>
 
-              <Form.Item>
+              <Form.Item style={{ marginBottom: 0 }}>
                 <Button
                   type="primary"
                   htmlType="submit"
@@ -94,30 +87,41 @@ const ContactPage: React.FC = () => {
                 </Button>
               </Form.Item>
             </Form>
-          </ConfigProvider> {/* 4. End of the ConfigProvider wrapper */}
+          </Card>
         </Col>
 
         {/* --- Right Column: Get In Touch --- */}
-        <Col xs={24} md={12} style={{ textAlign: 'center', padding: '2rem' }}>
-          <Title level={2} style={{ color: 'white', fontWeight: 700 }}>
-            Get In Touch
-          </Title>
-          <Paragraph style={{ color: '#e2e8f0', fontSize: '1.1rem', marginBottom: '2rem' }}>
-            We'd love to hear from you! Whether you have questions about
-            our services, need support, or want to explore partnership
-            opportunities, our team is ready to help.
-          </Paragraph>
-          
-          {/* Add your guitar pick logo here */}
-          <img 
-            // src={guitarPickLogo} // <-- Uncomment this line when you import your logo
-            src= {campusJamLogo} // Placeholder
-            alt="CampusJam Guitar Pick"
-            style={{ width: '80%', maxWidth: '300px', height: 'auto' }}
-          />
+        <Col xs={24} md={10} lg={12}>
+          <div style={{
+            background: brandGradient,
+            borderRadius: '12px',
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}>
+            <Space direction="vertical" size="large">
+              <Title level={2} style={{ color: 'white', fontWeight: 700, margin: 0 }}>
+                Get In Touch
+              </Title>
+              <Paragraph style={{ color: '#e2e8f0', fontSize: '1.1rem', marginBottom: '1rem' }}>
+                We'd love to hear from you! Whether you have questions,
+                need support, or want to explore partnership
+                opportunities, our team is ready to help.
+              </Paragraph>
+              
+              <img 
+                src= {campusJamLogo}
+                alt="CampusJam Logo"
+                style={{ width: '80%', maxWidth: '300px', height: 'auto' }}
+              />
+            </Space>
+          </div>
         </Col>
       </Row>
-    </Card>
+    </div>
   );
 };
 
