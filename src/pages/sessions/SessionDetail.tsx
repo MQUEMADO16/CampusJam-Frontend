@@ -13,6 +13,7 @@ import {
   List,
   Descriptions,
   message,
+  Modal,
 } from 'antd';
 import {
   UserOutlined,
@@ -76,6 +77,10 @@ const SessionDetail: React.FC = () => {
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
 
+  // --- Modal Hooks ---
+  const [modal, modalContextHolder] = Modal.useModal();
+  const [messageApi, messageContextHolder] = message.useMessage();
+
   // --- Data Fetching Effect ---
   const fetchSession = useCallback(async () => {
     if (!sessionId) {
@@ -120,57 +125,77 @@ const SessionDetail: React.FC = () => {
   // --- Button Handlers ---
   const handleJoinSession = async () => {
     if (!currentUser || !session) return;
-    setJoinLoading(true);
-    try {
-      await sessionService.addUserToSession(session._id, currentUser._id);
-      message.success("You've joined the session!");
-      await fetchSession(); 
-    } catch (err) {
-      message.error("Failed to join session. You may already be an attendee.");
-      console.error(err);
-    } finally {
-      setJoinLoading(false);
-    }
+    
+    modal.confirm({
+      title: 'Join Session',
+      content: `Are you sure you want to join "${session.title}"?`,
+      okText: 'Join Session',
+      cancelText: 'Cancel',
+      width: 400,
+      onOk: async () => {
+        setJoinLoading(true);
+        try {
+          await sessionService.addUserToSession(session._id, currentUser._id);
+          messageApi.success("You've joined the session!");
+          await fetchSession(); 
+        } catch (err) {
+          messageApi.error("Failed to join session. You may already be an attendee.");
+          console.error(err);
+        } finally {
+          setJoinLoading(false);
+        }
+      },
+    });
   };
 
   const handleLeaveSession = async () => {
     if (!currentUser || !session) return;
-    setJoinLoading(true);
-    try {
-      await sessionService.removeUserFromSession(session._id, currentUser._id);
-      message.info("You've left the session.");
-      await fetchSession(); 
-    } catch (err) {
-      message.error("Failed to leave session.");
-      console.error(err);
-    } finally {
-      setJoinLoading(false);
-    }
+    
+    modal.confirm({
+      title: 'Leave Session',
+      content: `Are you sure you want to leave "${session.title}"?`,
+      okText: 'Leave Session',
+      cancelText: 'Cancel',
+      width: 400,
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        setJoinLoading(true);
+        try {
+          await sessionService.removeUserFromSession(session._id, currentUser._id);
+          messageApi.info("You've left the session.");
+          await fetchSession(); 
+        } catch (err) {
+          messageApi.error("Failed to leave session.");
+          console.error(err);
+        } finally {
+          setJoinLoading(false);
+        }
+      },
+    });
   };
 
-
-const handleAddToCalendar = async () => {
+  const handleAddToCalendar = async () => {
     if (!session) {
-      message.error('Session data not loaded yet.');
+      messageApi.error('Session data not loaded yet.');
       return;
     }
 
-    message.loading('Adding to your calendar...', 0);
+    messageApi.loading('Adding to your calendar...', 0);
 
     try {
       // Call our new service function
       const response = await calendarService.addSessionToCalendar(session._id);
       
-      message.destroy(); // Remove loading message
-      message.success(response.message); // Show success message from backend
+      messageApi.destroy(); // Remove loading message
+      messageApi.success(response.message); // Show success message from backend
 
     } catch (err: any) {
-      message.destroy(); // Remove loading message
+      messageApi.destroy(); // Remove loading message
       let msg = 'Failed to add event.';
       if (err.response?.data?.message) {
         msg = err.response.data.message; // Show error from backend
       }
-      message.error(msg);
+      messageApi.error(msg);
     }
   };
 
@@ -195,135 +220,138 @@ const handleAddToCalendar = async () => {
   );
 
   return (
-    <Row justify="center" style={{ padding: '24px 0' }}>
-      <Col xs={24} md={22} lg={20} xl={18}>
-        <Card style={{ width: '100%', borderRadius: '16px' }}>
-          
-          {/* --- Header: Title and Actions --- */}
-          <Row justify="space-between" align="top" gutter={[16, 16]}>
-            <Col>
-              <Title level={2} style={{ marginBottom: 8 }}>
-                {session.title}
-              </Title>
-              <StatusTag status={session.status} />
-            </Col>
-            <Col>
-              <Space wrap>
-                {isHost ? (
-                  <Link to={`/sessions/${session._id}/edit`}>
-                    <Button icon={<EditOutlined />}>Edit Session</Button>
-                  </Link>
-                ) : isAttending ? (
-                  <Button
-                    type="default"
-                    danger
-                    icon={<MinusCircleOutlined />}
-                    onClick={handleLeaveSession}
-                    loading={joinLoading}
-                  >
-                    Leave Session
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    icon={<CheckCircleOutlined />}
-                    onClick={handleJoinSession}
-                    loading={joinLoading}
-                  >
-                    Join Session
-                  </Button>
-                )}
-                {!isHost && (
-                  <Button icon={<CalendarOutlined />} onClick={handleAddToCalendar}>
-                    Add to Calendar
-                  </Button>
-                )}
-              </Space>
-            </Col>
-          </Row>
-
-          <Divider />
-
-          {/* --- Main Content: Details + Attendees --- */}
-          <Row gutter={[32, 24]}>
-            {/* Left Column: Details */}
-            <Col xs={24} md={16}>
-              <Title level={4}>Description</Title>
-              <Paragraph>
-                {session.description || 'No description provided.'}
-              </Paragraph>
-
-              <Title level={4} style={{ marginTop: 24 }}>Details</Title>
-              <Descriptions bordered column={1} size="small">
-                <Descriptions.Item label={<Space><UserOutlined /> Host</Space>}>
-                  {session.host ? (
-                    <Link to={`/profile/${session.host._id}`}>
-                      <Space>
-                        <Avatar icon={<UserOutlined />} />
-                        {session.host.name}
-                      </Space>
+    <>
+      {modalContextHolder}
+      {messageContextHolder}
+      <Row justify="center" style={{ padding: '24px 0' }}>
+        <Col xs={24} md={22} lg={20} xl={18}>
+          <Card style={{ width: '100%', borderRadius: '16px' }}>
+            
+            {/* --- Header: Title and Actions --- */}
+            <Row justify="space-between" align="top" gutter={[16, 16]}>
+              <Col>
+                <Title level={2} style={{ marginBottom: 8 }}>
+                  {session.title}
+                </Title>
+                <StatusTag status={session.status} />
+              </Col>
+              <Col>
+                <Space wrap>
+                  {isHost ? (
+                    <Link to={`/sessions/${session._id}/edit`}>
+                      <Button icon={<EditOutlined />}>Edit Session</Button>
                     </Link>
+                  ) : isAttending ? (
+                    <Button
+                      type="default"
+                      danger
+                      icon={<MinusCircleOutlined />}
+                      onClick={handleLeaveSession}
+                      loading={joinLoading}
+                    >
+                      Leave Session
+                    </Button>
                   ) : (
-                    <Text type="secondary">User not found</Text>
+                    <Button
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      onClick={handleJoinSession}
+                      loading={joinLoading}
+                    >
+                      Join Session
+                    </Button>
                   )}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
-                  {new Date(session.startTime).toLocaleString()}
-                  {session.endTime && ` - ${new Date(session.endTime).toLocaleString()}`}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
-                  {session.location || 'Not specified'}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
-                  <Tag>{session.genre || 'Any'}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><InfoCircleOutlined /> Skill Level</Space>}>
-                  <Tag>{session.skillLevel}</Tag>
-                </Descriptions.Item>
-              </Descriptions>
+                  {!isHost && (
+                    <Button icon={<CalendarOutlined />} onClick={handleAddToCalendar}>
+                      Add to Calendar
+                    </Button>
+                  )}
+                </Space>
+              </Col>
+            </Row>
 
-              <Title level={4} style={{ marginTop: 24 }}>Instruments Needed</Title>
-              <Space wrap size={[0, 8]}>
-                {session.instrumentsNeeded.length > 0 ? (
-                  session.instrumentsNeeded.map((inst) => (
-                    <Tag key={inst} color="blue">{inst}</Tag>
-                  ))
-                ) : (
-                  <Text type="secondary">All instruments welcome!</Text>
-                )}
-              </Space>
-            </Col>
+            <Divider />
 
-            {/* Right Column: Attendees */}
-            <Col xs={24} md={8}>
-              <Title level={4}>
-                <TeamOutlined style={{ marginRight: 8 }} />
-                Attendees ({session.attendees.length})
-              </Title>
-              <List
-                dataSource={session.attendees}
-                renderItem={(user) => (
-                  <List.Item>
-                    <List.Item.Meta
-                      description={
-                        <Link to={`/profile/${user._id}`}>
-                          <Space>
-                            <Avatar icon={<UserOutlined />} />
-                            {user.name}
-                          </Space>
-                        </Link>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Col>
-          </Row>
-        </Card>
-      </Col>
-    </Row>
+            {/* --- Main Content: Details + Attendees --- */}
+            <Row gutter={[32, 24]}>
+              {/* Left Column: Details */}
+              <Col xs={24} md={16}>
+                <Title level={4}>Description</Title>
+                <Paragraph>
+                  {session.description || 'No description provided.'}
+                </Paragraph>
+
+                <Title level={4} style={{ marginTop: 24 }}>Details</Title>
+                <Descriptions bordered column={1} size="small">
+                  <Descriptions.Item label={<Space><UserOutlined /> Host</Space>}>
+                    {session.host ? (
+                      <Link to={`/profile/${session.host._id}`}>
+                        <Space>
+                          <Avatar icon={<UserOutlined />} />
+                          {session.host.name}
+                        </Space>
+                      </Link>
+                    ) : (
+                      <Text type="secondary">User not found</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
+                    {new Date(session.startTime).toLocaleString()}
+                    {session.endTime && ` - ${new Date(session.endTime).toLocaleString()}`}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
+                    {session.location || 'Not specified'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
+                    <Tag>{session.genre || 'Any'}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label={<Space><InfoCircleOutlined /> Skill Level</Space>}>
+                    <Tag>{session.skillLevel}</Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+
+                <Title level={4} style={{ marginTop: 24 }}>Instruments Needed</Title>
+                <Space wrap size={[0, 8]}>
+                  {session.instrumentsNeeded.length > 0 ? (
+                    session.instrumentsNeeded.map((inst) => (
+                      <Tag key={inst} color="blue">{inst}</Tag>
+                    ))
+                  ) : (
+                    <Text type="secondary">All instruments welcome!</Text>
+                  )}
+                </Space>
+              </Col>
+
+              {/* Right Column: Attendees */}
+              <Col xs={24} md={8}>
+                <Title level={4}>
+                  <TeamOutlined style={{ marginRight: 8 }} />
+                  Attendees ({session.attendees.length})
+                </Title>
+                <List
+                  dataSource={session.attendees}
+                  renderItem={(user) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        description={
+                          <Link to={`/profile/${user._id}`}>
+                            <Space>
+                              <Avatar icon={<UserOutlined />} />
+                              {user.name}
+                            </Space>
+                          </Link>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+      </Row>
+    </>
   );
 };
 
 export default SessionDetail;
-
