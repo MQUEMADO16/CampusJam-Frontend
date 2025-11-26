@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  List,
   Spin,
   Typography,
   Alert,
@@ -12,9 +11,8 @@ import {
   Input,
   Select,
   Radio,
-  Space,
-  Table,
   Tag,
+  Table,
 } from 'antd';
 import { isAxiosError } from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
@@ -27,11 +25,10 @@ import {
   INSTRUMENT_OPTIONS,
   GENRE_OPTIONS,
   SKILL_LEVEL_OPTIONS,
-} from '../../constants/appData'; // Import constants for filters
+} from '../../constants/appData'; 
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-const { Option } = Select;
 
 // Define filter state shape
 interface SessionFilters {
@@ -43,8 +40,6 @@ interface SessionFilters {
 
 /**
  * The main public sessions dashboard page.
- * Fetches all sessions and allows for client-side filtering
- * and switching between card and table views.
  */
 const Dashboard: React.FC = () => {
   const [allSessions, setAllSessions] = useState<TSessionFeed[]>([]);
@@ -293,19 +288,21 @@ const Dashboard: React.FC = () => {
       </Card>
       
       {viewMode === 'card' ? (
-        <List
-          dataSource={filteredSessions}
-          grid={{
-            gutter: 24,
-            xs: 1, sm: 2, md: 2, lg: 3, xl: 4, xxl: 4,
-          }}
-          locale={{ emptyText: customEmptyView }}
-          renderItem={(session) => (
-            <List.Item>
-              <SessionCard session={session} />
-            </List.Item>
-          )}
-        />
+        filteredSessions.length > 0 ? (
+          <Row gutter={[24, 24]}>
+            {filteredSessions.map((session) => (
+              <Col
+                key={session._id}
+                xs={24} sm={12} md={12} lg={8} xl={6} xxl={6}
+                style={{ display: 'flex' }} 
+              >
+                <SessionCard session={session} />
+              </Col>
+            ))}
+          </Row>
+        ) : (
+          customEmptyView
+        )
       ) : (
         <Table
           dataSource={filteredSessions}

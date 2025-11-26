@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd'; // Added Button
+import React, { useState, useEffect } from 'react'; // 1. Added useEffect
+import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  CustomerServiceOutlined, // For "Browse Sessions"
-  UserOutlined, // For "My Sessions"
-  TeamOutlined, // For "My Connections"
-  PlusOutlined, // For "Create Session"
+  CustomerServiceOutlined,
+  UserOutlined,
+  TeamOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
+
+
+import WelcomeModal from '../features/WelcomeModal'; 
 
 const { Content, Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -18,19 +21,36 @@ const DashboardLayout: React.FC = () => {
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(false);
 
+ 
+  const [showWelcome, setShowWelcome] = useState(false);
+
+ 
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('hasSeenWelcomeModal');
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+ 
+  const handleCloseWelcome = () => {
+    localStorage.setItem('hasSeenWelcomeModal', 'true');
+    setShowWelcome(false);
+  };
+
   const sidebarItems = [
     {
-      key: '/my-sessions', // This is the user's "home"
+      key: '/my-sessions',
       icon: <UserOutlined />,
       label: 'My Sessions',
     },
     {
-      key: '/sessions', // This is for discovery
+      key: '/sessions',
       icon: <CustomerServiceOutlined />,
       label: 'Browse Sessions',
     },
     {
-      key: '/connections', // This is for the social graph
+      key: '/connections',
       icon: <TeamOutlined />,
       label: 'My Connections',
     },
@@ -40,7 +60,7 @@ const DashboardLayout: React.FC = () => {
     <Layout style={{ minHeight: '100vh' }}>
       <AppHeader layout="dashboard" />
 
-      <Layout style={{ marginTop: 64 }}> {/* Offset for the fixed header */}
+      <Layout style={{ marginTop: 64 }}>
         <Sider
           theme="light"
           collapsible
@@ -79,9 +99,7 @@ const DashboardLayout: React.FC = () => {
             theme={{
               components: {
                 Menu: {
-                  // Increase vertical height of each menu item
                   itemHeight: 56,
-                  // Add a small margin between items
                   itemMarginBlock: 8,
                 },
               },
@@ -94,7 +112,7 @@ const DashboardLayout: React.FC = () => {
               onClick={({ key }) => navigate(key)}
               items={sidebarItems}
               style={{
-                marginTop: '0px', // Adjusted from 24px to sit below button
+                marginTop: '0px',
                 borderRight: 'none',
               }}
             />
@@ -112,6 +130,13 @@ const DashboardLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
+
+    
+      <WelcomeModal 
+        isOpen={showWelcome} 
+        onClose={handleCloseWelcome} 
+      />
+
     </Layout>
   );
 };
