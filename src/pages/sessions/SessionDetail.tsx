@@ -267,18 +267,31 @@ const handleAddToCalendar = async () => {
                     <Text type="secondary">User not found</Text>
                   )}
                 </Descriptions.Item>
-                <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
-                  {new Date(session.startTime).toLocaleString()}
-                  {session.endTime && ` - ${new Date(session.endTime).toLocaleString()}`}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
-                  {session.location || 'Not specified'}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
-                  <Tag>{session.genre || 'Any'}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><InfoCircleOutlined /> Skill Level</Space>}>
-                  <Tag>{session.skillLevel}</Tag>
+                <Descriptions.Item label={<Space><CalendarOutlined /> Date & Time</Space>}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    
+                    {/* Start Date & Time */}
+                    <Space>
+                      <Text type="secondary">Start:</Text>
+                      <Text strong>{new Date(session.startTime).toLocaleDateString()}</Text>
+                      <Text>at</Text>
+                      <Tag color="blue">
+                        {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Tag>
+                    </Space>
+
+                    {/* End Date & Time (Only shows if an end time exists) */}
+                    {session.endTime && (
+                      <Space>
+                        <Text type="secondary">End:&nbsp;&nbsp;</Text>
+                        <Text strong>{new Date(session.endTime).toLocaleDateString()}</Text>
+                        <Text>at</Text>
+                        <Tag color="orange">
+                          {new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Tag>
+                      </Space>
+                    )}
+                  </div>
                 </Descriptions.Item>
               </Descriptions>
 

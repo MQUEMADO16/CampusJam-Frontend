@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Menu,
@@ -13,19 +13,31 @@ import {
   Divider,
   Modal,
   message,
+  Badge,
+  List,
 } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
   ProfileOutlined,
-  SettingOutlined, // For Settings & Privacy
-  QuestionCircleOutlined, // For Help & Support
-  BulbOutlined, // For Display & Accessibility (or another appropriate icon)
-  RightOutlined, // For the arrow icon on menu items
+  SettingOutlined,
+  QuestionCircleOutlined,
+  BulbOutlined,
+  RightOutlined,
+  BellOutlined, // <-- NEW: Bell Icon
 } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
+// Make sure this path matches where your auth context is
 import { useAuth } from '../../../context/auth.context';
+
+// --- NEW: Import Notification Services ---
+// Ensure you created src/services/notification.service.ts as discussed
+import { 
+  getNotifications, 
+  markNotificationRead, 
+  markAllNotificationsRead 
+} from '../../../services/notification.service';
 
 import logoSrc from '../../../assets/images/campus-jam-logo.png';
 
@@ -34,34 +46,81 @@ const { Title, Text } = Typography;
 
 const ACTIVE_COLOR = '#D10A50';
 
-// Define the props for the component
 interface AppHeaderProps {
-  layout?: 'main' | 'dashboard'; // 'main' is public, 'dashboard' is logged in
+  layout?: 'main' | 'dashboard';
 }
 
-// Accept the 'layout' prop, defaulting to 'main'
 const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, logout } = useAuth();
   const logoDestination = user ? '/my-sessions' : '/';
+  
+  // --- State ---
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false); // Controls notification dropdown
+  const [notifications, setNotifications] = useState<any[]>([]); // Stores notification data
+  const [unreadCount, setUnreadCount] = useState(0); // Stores badge count
+  
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
+  // --- 1. Notification Polling Logic ---
+  const fetchNotifications = async () => {
+    // Only fetch if user is logged in
+    if (!user) return;
+    
+    try {
+      const res = await getNotifications();
+      setNotifications(res.data);
+      // Calculate unread count
+      const unread = res.data.filter((n: any) => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (err) {
+      console.error("Failed to fetch notifications");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications(); // Fetch immediately on load
+      const interval = setInterval(fetchNotifications, 60000); // Poll every 60 seconds
+      return () => clearInterval(interval); // Cleanup on unmount
+    }
+  }, [user]);
+
+  // --- 2. Notification Handlers ---
+  const handleNotificationClick = async (item: any) => {
+    // Mark read if it isn't already
+    if (!item.isRead) {
+      await markNotificationRead(item._id);
+      fetchNotifications(); // Refresh list to update badge
+    }
+    setIsNotifOpen(false); // Close dropdown
+    
+    // Navigate if there is a link
+    if (item.link) {
+      navigate(item.link);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllNotificationsRead();
+    fetchNotifications();
+  };
+
+  // --- 3. Existing Navigation Handlers ---
   const handleLogout = () => {
     modal.confirm({
       title: 'Log Out',
       content: 'Are you sure you want to log out?',
       okText: 'Log Out',
       cancelText: 'Cancel',
-      width: 400, // Adjusted width
+      width: 400,
       onOk: () => {
         navigate('/', {
-          replace: true, // Use replace to prevent going back to the logged-in state
-          state: {
-            alert: { type: 'success', text: 'You have been logged out.' }
-          }
+          replace: true,
+          state: { alert: { type: 'success', text: 'You have been logged out.' } }
         });
         setTimeout(() => {
           logout();
@@ -76,9 +135,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
   };
 
   const handleProfileClick = () => {
-    if (user) {
-      navigate(`/profile/${user._id}`);
-    }
+    if (user) navigate(`/profile/${user._id}`);
     setIsDropdownOpen(false);
   };
 
@@ -101,94 +158,83 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
     setIsDropdownOpen(false);
   };
 
+  // --- 4. Render Components ---
+
+  // Notification Dropdown Content
+  const notificationMenu = (
+    <Card
+      style={{ width: 320, borderRadius: 8, padding: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+      bodyStyle={{ padding: 0 }}
+    >
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text strong>Notifications</Text>
+        {unreadCount > 0 && (
+          <a onClick={handleMarkAllRead} style={{ fontSize: '12px', color: '#1677ff', cursor: 'pointer' }}>
+            Mark all read
+          </a>
+        )}
+      </div>
+      
+      <List
+        dataSource={notifications.slice(0, 5)} // Limit to top 5 for the dropdown
+        renderItem={(item) => (
+          <List.Item 
+            onClick={() => handleNotificationClick(item)}
+            style={{ 
+              padding: '12px 16px', 
+              cursor: 'pointer',
+              background: item.isRead ? '#fff' : '#e6f7ff', // Blue tint for unread items
+              transition: 'background 0.2s',
+              borderBottom: '1px solid #f0f0f0'
+            }}
+          >
+            <List.Item.Meta
+              avatar={<Avatar src={item.sender?.avatarUrl} icon={<UserOutlined />} />}
+              title={<Text style={{ fontSize: '13px' }}>{item.message}</Text>}
+              description={<Text type="secondary" style={{ fontSize: '11px' }}>{new Date(item.createdAt).toLocaleDateString()}</Text>}
+            />
+          </List.Item>
+        )}
+        locale={{ emptyText: <div style={{ padding: '16px', textAlign: 'center' }}><Text type="secondary">No notifications</Text></div> }}
+        style={{ maxHeight: '300px', overflowY: 'auto' }}
+      />
+      
+      <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0' }}>
+        <Button type="link" size="small" onClick={() => navigate('/notifications')}>View all</Button>
+      </div>
+    </Card>
+  );
+
+  // User Profile Dropdown Content
   const userDropdownOverlay = (
     <Card
-      style={{
-        width: 280,
-        borderRadius: 8,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        padding: '0',
-      }}
+      style={{ width: 280, borderRadius: 8, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', padding: '0' }}
       bodyStyle={{ padding: '0' }}
     >
-      {/* User Info Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '16px',
-          paddingBottom: '12px',
-        }}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', padding: '16px', paddingBottom: '12px' }}>
         <Avatar size={48} icon={<UserOutlined />} />
-        <Text strong style={{ marginLeft: '12px', fontSize: '1rem' }}>
-          {user?.name}
-        </Text>
+        <Text strong style={{ marginLeft: '12px', fontSize: '1rem' }}>{user?.name}</Text>
       </div>
-
-      {/* View Profile Button */}
       <div style={{ padding: '0 16px 16px 16px' }}>
-        <Button
-          type="default"
-          onClick={handleProfileClick}
-          icon={<ProfileOutlined />}
-          style={{ width: '100%', textAlign: 'left', borderRadius: 6 }}
-        >
-          View Profile
-        </Button>
+        <Button type="default" onClick={handleProfileClick} icon={<ProfileOutlined />} style={{ width: '100%', textAlign: 'left', borderRadius: 6 }}>View Profile</Button>
       </div>
-
       <Divider style={{ margin: '0 0 8px 0' }} />
-
-      {/* Menu Items */}
-      <Space
-        direction="vertical"
-        style={{ width: '100%', padding: '0 0 8px 0' }}
-        size={0}
-      >
+      <Space direction="vertical" style={{ width: '100%', padding: '0 0 8px 0' }} size={0}>
         {[
-          {
-            key: 'settings',
-            label: 'Settings & Privacy',
-            icon: <SettingOutlined />,
-            onClick: handleSettingsClick,
-          },
-          {
-            key: 'help',
-            label: 'Help & Support',
-            icon: <QuestionCircleOutlined />,
-            onClick: handleHelpClick,
-          },
-          {
-            key: 'display',
-            label: 'Display & Accessibility',
-            icon: <BulbOutlined />,
-            onClick: handleDisplayClick,
-          },
-          {
-            key: 'logout',
-            label: 'Log Out',
-            icon: <LogoutOutlined />,
-            onClick: handleLogout,
-          },
+          { key: 'settings', label: 'Settings & Privacy', icon: <SettingOutlined />, onClick: handleSettingsClick },
+          { key: 'help', label: 'Help & Support', icon: <QuestionCircleOutlined />, onClick: handleHelpClick },
+          { key: 'display', label: 'Display & Accessibility', icon: <BulbOutlined />, onClick: handleDisplayClick },
+          { key: 'logout', label: 'Log Out', icon: <LogoutOutlined />, onClick: handleLogout },
         ].map((item) => (
           <div
             key={item.key}
             onClick={item.onClick}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px 16px',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
-            }}
+            style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f5f5f5')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            <span style={{ marginRight: '12px', fontSize: '1rem' }}>
-              {item.icon}
-            </span>
-            <Text style={{ flexGrow: 1, fontSize: '0.9rem' }}>
-              {item.label}
-            </Text>
+            <span style={{ marginRight: '12px', fontSize: '1rem' }}>{item.icon}</span>
+            <Text style={{ flexGrow: 1, fontSize: '0.9rem' }}>{item.label}</Text>
             <RightOutlined style={{ fontSize: '0.8rem', color: '#ccc' }} />
           </div>
         ))}
@@ -213,107 +259,70 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
         }}
       >
-        {/* Logo Section (Always visible) */}
+        {/* Logo Section */}
         <Link to={logoDestination} style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>
-            <img
-              src={logoSrc}
-              alt="CampusJam Logo"
-              style={{ height: '32px', marginLeft: '8px', marginTop: '24px' }}
-            />
+            <img src={logoSrc} alt="CampusJam Logo" style={{ height: '32px', marginLeft: '8px', marginTop: '24px' }} />
           </span>
-          <Title
-            level={4}
-            style={{
-              margin: 0,
-              background: 'linear-gradient(to right, #D10A50, #402579)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
+          <Title level={4} style={{ margin: 0, background: 'linear-gradient(to right, #D10A50, #402579)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             CampusJam
           </Title>
         </Link>
 
-        {/* Conditionally render the Menu */}
+        {/* Public Menu */}
         {layout === 'main' && (
-          <ConfigProvider
-            theme={{
-              token: {
-                colorPrimary: ACTIVE_COLOR,
-              },
-              components: {
-                Menu: {
-                  itemSelectedColor: ACTIVE_COLOR,
-                  itemHoverColor: ACTIVE_COLOR,
-                  fontSize: 16, // Adjusted from 18px for better fit
-                  itemPaddingInline: 24,
-                },
-              },
-            }}
-          >
-            {/* Navigation Menu */}
-            <Menu
-              mode="horizontal"
-              onClick={({ key }) => handleNavigate(key)}
-              selectedKeys={[location.pathname]}
-              style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }}
-              items={[
-                { key: '/', label: 'Home' },
-                { key: '/about', label: 'About' },
-                { key: '/contact', label: 'Contact' },
-                { key: '/pricing', label: 'Pricing' },
-              ]}
+          <ConfigProvider theme={{ token: { colorPrimary: ACTIVE_COLOR }, components: { Menu: { itemSelectedColor: ACTIVE_COLOR, itemHoverColor: ACTIVE_COLOR, fontSize: 16, itemPaddingInline: 24 } } }}>
+            <Menu 
+              mode="horizontal" 
+              onClick={({ key }) => handleNavigate(key)} 
+              selectedKeys={[location.pathname]} 
+              style={{ flex: 1, justifyContent: 'center', borderBottom: 'none' }} 
+              items={[{ key: '/', label: 'Home' }, { key: '/about', label: 'About' }, { key: '/contact', label: 'Contact' }, { key: '/pricing', label: 'Pricing' }]} 
             />
           </ConfigProvider>
         )}
         
-        {/* If in dashboard, add a simple spacer to keep auth buttons to the right */}
-        {layout === 'dashboard' && (
-          <div style={{ flex: 1 }} />
-        )}
+        {layout === 'dashboard' && <div style={{ flex: 1 }} />}
 
-        {/* Auth Buttons Section (Always visible, logic is auth-aware) */}
-        <div
-          style={{
-            minWidth: '150px',
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
+        {/* Right Side Actions (Auth & Notifications) */}
+        <div style={{ minWidth: '150px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '24px' }}>
           {isLoading ? (
             <Spin />
           ) : user ? (
-            <Dropdown
-              overlay={userDropdownOverlay}
-              placement="bottomRight"
-              arrow
-              trigger={['click']}
-              open={isDropdownOpen}
-              onOpenChange={setIsDropdownOpen}
-              dropdownRender={(menu) => (
-                <div style={{ marginTop: '8px' }}>{menu}</div>
-              )}
-            >
-              <Avatar
-                size="large"
-                icon={<UserOutlined />}
-                style={{ cursor: 'pointer', border: '1px solid #ddd' }}
-              />
-            </Dropdown>
+            <>
+              {/* --- NEW: Notification Bell --- */}
+              <Dropdown 
+                overlay={notificationMenu} 
+                trigger={['click']} 
+                placement="bottomRight"
+                open={isNotifOpen}
+                onOpenChange={setIsNotifOpen}
+                arrow
+              >
+                <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                    <BellOutlined style={{ fontSize: '22px', color: 'rgba(0,0,0,0.65)' }} />
+                  </Badge>
+                </div>
+              </Dropdown>
+
+              {/* User Profile Avatar */}
+              <Dropdown
+                overlay={userDropdownOverlay}
+                placement="bottomRight"
+                arrow
+                trigger={['click']}
+                open={isDropdownOpen}
+                onOpenChange={setIsDropdownOpen}
+                dropdownRender={(menu) => <div style={{ marginTop: '8px' }}>{menu}</div>}
+              >
+                <Avatar size="large" icon={<UserOutlined />} style={{ cursor: 'pointer', border: '1px solid #ddd' }} />
+              </Dropdown>
+            </>
           ) : (
             <Space>
               <Button onClick={() => handleNavigate('/login')}>Log In</Button>
-              <Button
-                type="primary"
-                onClick={() => handleNavigate('/signup')}
-                style={{
-                  background: 'linear-gradient(to right, #D10A50, #402579)',
-                  borderColor: 'transparent',
-                }}
-              >
-                Sign Up
-              </Button>
+              <Button type="primary" onClick={() => handleNavigate('/signup')} style={{ background: 'linear-gradient(to right, #D10A50, #402579)', borderColor: 'transparent' }}>Sign Up</Button>
             </Space>
           )}
         </div>

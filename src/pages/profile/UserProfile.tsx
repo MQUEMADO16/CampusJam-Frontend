@@ -17,8 +17,9 @@ import {
   EditOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons';
-import { Link, useParams,} from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
 import { userService } from '../../services/user.service';
@@ -32,6 +33,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   
   const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
   
@@ -145,6 +147,17 @@ const UserProfile: React.FC = () => {
     <Row justify="center" style={{ padding: '24px 0' }}>
       <Col xs={24} md={20} lg={16} xl={12}>
         <Card style={{ width: '100%', borderRadius: '16px' }}>
+
+        <div style={{ marginBottom: '16px' }}>
+            <Button 
+              type="text" 
+              icon={<ArrowLeftOutlined />} 
+              onClick={() => navigate(-1)}
+            >
+              Back
+            </Button>
+          </div>
+          
           {/* --- Profile Header --- */}
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm="auto">
