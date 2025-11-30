@@ -92,6 +92,21 @@ function isUnderAgeLimit(date: Date, minYears = 13): boolean {
   return date > cutoff;
 }
 
+const CHAR_LIMS = {
+  NAME: 100,
+  EMAIL: 255,
+  PASSWORD: 128,
+} as const;
+
+const checkMaxFieldLim = (fieldName: string, maxLength: number) => ({
+  validator: (_: any, value: string) => {
+    if (!value || value.length <= maxLength) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new Error(`${fieldName} cannot exceed ${maxLength} characters`));
+  },
+});
+
 interface SignUpFormValues {
   name: string;
   email: string;
@@ -186,6 +201,7 @@ const SignUpForm: React.FC = () => {
             rules={[
               { required: true, message: 'Please enter your name' },
               { min: 2, message: 'Name must be at least 2 characters' },
+              checkMaxFieldLim("Name", CHAR_LIMS.NAME),
             ]}
           >
             <Input placeholder="John Doe" size="large" />
@@ -199,6 +215,7 @@ const SignUpForm: React.FC = () => {
             rules={[
               { required: true, message: 'Please enter your email' },
               { type: 'email', message: 'Enter a valid email' },
+              checkMaxFieldLim("Email", CHAR_LIMS.EMAIL),
             ]}
           >
             <Input placeholder="john@example.com" inputMode="email" size="large" />
@@ -215,6 +232,7 @@ const SignUpForm: React.FC = () => {
                 pattern: PASSWORD_RULE,
                 message: 'Min 8 chars, with upper, lower, number & symbol.',
               },
+              checkMaxFieldLim("Password", CHAR_LIMS.PASSWORD),
             ]}
             hasFeedback
           >
@@ -230,6 +248,7 @@ const SignUpForm: React.FC = () => {
             hasFeedback
             rules={[
               { required: true, message: 'Please confirm your password' },
+              checkMaxFieldLim("Password", CHAR_LIMS.PASSWORD),
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
