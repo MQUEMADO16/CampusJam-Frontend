@@ -204,7 +204,11 @@ const SignUpForm: React.FC = () => {
               checkMaxFieldLim("Name", CHAR_LIMS.NAME),
             ]}
           >
-            <Input placeholder="John Doe" size="large" />
+            <Input 
+            placeholder="John Doe" 
+            size="large"
+            maxLength={CHAR_LIMS.NAME}
+            />
           </Form.Item>
         </Col>
 
@@ -218,7 +222,12 @@ const SignUpForm: React.FC = () => {
               checkMaxFieldLim("Email", CHAR_LIMS.EMAIL),
             ]}
           >
-            <Input placeholder="john@example.com" inputMode="email" size="large" />
+            <Input 
+            placeholder="john@example.com" 
+            inputMode="email" 
+            size="large" 
+            maxLength={CHAR_LIMS.EMAIL}
+            />
           </Form.Item>
         </Col>
 
@@ -236,7 +245,11 @@ const SignUpForm: React.FC = () => {
             ]}
             hasFeedback
           >
-            <Input.Password placeholder="Create a strong password" size="large" />
+            <Input.Password 
+            placeholder="Create a strong password" 
+            size="large" 
+            maxLength={CHAR_LIMS.PASSWORD}
+            />
           </Form.Item>
         </Col>
 
@@ -259,7 +272,11 @@ const SignUpForm: React.FC = () => {
               }),
             ]}
           >
-            <Input.Password placeholder="Re-enter password" size="large" />
+            <Input.Password 
+            placeholder="Re-enter password" 
+            size="large" 
+            maxLength={CHAR_LIMS.PASSWORD}
+            />
           </Form.Item>
         </Col>
 

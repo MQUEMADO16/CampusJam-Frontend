@@ -107,6 +107,20 @@ const labelStyle: React.CSSProperties = {
 
 const { Title, Text } = Typography;
 
+const CHAR_LIMS = {
+  EMAIL: 255,
+  PASSWORD: 128,
+} as const;
+
+const checkMaxFieldLim = (fieldName: string, maxLength: number) => ({
+  validator: (_: any, value: string) => {
+    if (!value || value.length <= maxLength) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new Error(`${fieldName} cannot exceed ${maxLength} characters`));
+  },
+});
+
 const Login: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -207,6 +221,7 @@ const Login: React.FC = () => {
               rules={[
                 { required: true, message: 'Please enter your email' },
                 { type: 'email', message: 'Enter a valid email address' },
+                checkMaxFieldLim("Email", CHAR_LIMS.EMAIL),
               ]}
             >
               <StyledInput
@@ -222,12 +237,14 @@ const Login: React.FC = () => {
               rules={[
                 { required: true, message: 'Please enter your password' },
                 { min: 6, message: 'Password must be at least 6 characters' },
+                checkMaxFieldLim("Password", CHAR_LIMS.PASSWORD),
               ]}
             >
               <StyledInputPassword
                 prefix={<LockOutlined style={{ color: 'rgba(0,0,0,.25)' }} />}
                 placeholder="Your password"
                 size="large"
+                maxLength={CHAR_LIMS.PASSWORD}
               />
             </Form.Item>
           </ConfigProvider>
