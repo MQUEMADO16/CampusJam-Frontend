@@ -79,7 +79,7 @@ const UserProfile: React.FC = () => {
     // Run only after both users have loaded
     if (currentUser && profileUser) {
       // Check if the profileUser's ID is in the currentUser's following list
-      const isFollowing = currentUser.connections.following?.includes(profileUser._id);
+      const isFollowing = currentUser.connections?.following?.includes(profileUser._id);
       setIsFriend(isFollowing);
     }
   }, [currentUser, profileUser]);
