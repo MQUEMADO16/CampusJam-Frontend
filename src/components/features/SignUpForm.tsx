@@ -230,6 +230,10 @@ const SignUpForm: React.FC = () => {
             hasFeedback
             rules={[
               { required: true, message: 'Please confirm your password' },
+              {
+                pattern: PASSWORD_RULE,
+                message: 'Min 8 chars, with upper, lower, number & symbol.',
+              },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {

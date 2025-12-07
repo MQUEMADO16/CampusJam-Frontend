@@ -26,6 +26,7 @@ export type TSession = {
   startTime: string; // ISO date string
   endTime?: string; // ISO date string
   location?: string;
+  address?: string;
   genre?: string;
   skillLevel: 'Any' | 'Beginner' | 'Intermediate' | 'Advanced';
   instrumentsNeeded: string[];
