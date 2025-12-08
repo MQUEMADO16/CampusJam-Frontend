@@ -9,88 +9,141 @@ import {
   Spin,
   Alert,
   Empty,
-  Divider,
+  Tabs,
+  Tag,
+  Space,
   message,
 } from 'antd';
-import { UserOutlined, MessageOutlined, UserDeleteOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import {
+  UserOutlined,
+  MessageOutlined,
+  UserDeleteOutlined,
+  UserAddOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import { Link, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
 import { useAuth } from '../../context/auth.context';
 import { userService } from '../../services/user.service';
-import { TUser } from '../../types/user.types';
+import { TUser } from '../../types';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-
-type Friend = Pick<TUser, '_id' | 'name' | 'email'>;
+type Friend = TUser; 
 
 const Connections: React.FC = () => {
   const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
-  const [friends, setFriends] = useState<Friend[]>([]); // Starts as an empty array
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [loadingFriendId, setLoadingFriendId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
+  // State for "My Network" Tab
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(true);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // State for "Find Musicians" Tab 
+  const [searchResults, setSearchResults] = useState<TUser[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchHasRun, setSearchHasRun] = useState(false); // To show "No results" only after search
+
+  // Fetch Friends (My Network)
   useEffect(() => {
-    if (authIsLoading) {
-      setIsLoading(false); 
-      return;
-    }
+    if (authIsLoading) return;
     
     if (!currentUser) {
-      setIsLoading(false);
-      setError('You must be logged in to view your network.');
+      setLoadingFriends(false);
+      setFriendsError('You must be logged in to view your network.');
       return;
     }
 
     const fetchFriends = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
+        setLoadingFriends(true);
+        setFriendsError(null);
         
+        // This endpoint returns { friends: [...] }
         const response = await userService.getFriends(currentUser._id);
-        setFriends(response.data.friends || []); 
+        // Cast or map the response to ensure it matches the Friend type
+        setFriends((response.data.friends as unknown as Friend[]) || []); 
 
       } catch (err) {
         console.error('Failed to fetch friends:', err);
         if (isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Failed to load your network.');
+          setFriendsError(err.response?.data?.message || 'Failed to load your network.');
         } else {
-          setError('An unknown error occurred.');
+          setFriendsError('An unknown error occurred.');
         }
       } finally {
-        setIsLoading(false);
+        setLoadingFriends(false);
       }
     };
 
     fetchFriends();
-  }, [currentUser, authIsLoading]); // Re-run if auth state changes
+  }, [currentUser, authIsLoading]);
 
   const handleRemoveFriend = async (friendId: string, friendName: string) => {
     if (!currentUser) return;
-    setLoadingFriendId(friendId); // Set loading for this specific button
+    setActionLoadingId(friendId);
     try {
-      // Call the service
       const response = await userService.removeFriend(currentUser._id, friendId);
       
-      // Update the AuthContext
+      // Update AuthContext
       if (response.data.user && token) {
         login(response.data.user, token);
       }
       
-      // Update the local state to remove the friend from the list
-      setFriends((prevFriends) => prevFriends.filter(f => f._id !== friendId));
+      setFriends((prev) => prev.filter(f => f._id !== friendId));
       
       message.success(`You are no longer following ${friendName}`);
     } catch (err) {
-      message.error('Failed to remove friend. Please try again.');
+      message.error('Failed to remove connection.');
     } finally {
-      setLoadingFriendId(null); // Clear loading state
+      setActionLoadingId(null);
     }
   };
 
-  if (authIsLoading || isLoading) {
+  const handleAddFriend = async (targetUser: TUser) => {
+    if (!currentUser) return;
+    setActionLoadingId(targetUser._id);
+    try {
+      const response = await userService.addFriend(currentUser._id, targetUser._id);
+      
+      // Update AuthContext
+      if (response.data.user && token) {
+        login(response.data.user, token);
+      }
+
+      setFriends((prev) => [...prev, targetUser]);
+      message.success(`You are now following ${targetUser.name}`);
+      
+    } catch (err) {
+      message.error('Failed to follow user.');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const onGlobalSearch = async (value: string) => {
+    if (!value.trim()) return;
+    setIsSearching(true);
+    setSearchHasRun(true);
+    try {
+      const response = await userService.searchUser(value);
+      const filtered = response.data.filter(u => u._id !== currentUser?._id);
+      setSearchResults(filtered);
+    } catch (err) {
+      message.error('Search failed. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const isAlreadyFriend = (userId: string) => {
+    return friends.some(f => f._id === userId);
+  };
+
+  if (authIsLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <Spin size="large" />
@@ -98,61 +151,148 @@ const Connections: React.FC = () => {
     );
   }
 
-  if (error) {
-    return <Alert message="Error" description={error} type="error" showIcon />;
-  }
-
-  const onSearch = (value: string) => {
-    console.log('Search for:', value);
-    // TODO: Implement user search logic
-  };
-
-  return (
-    <Card style={{ borderRadius: '16px' }}>
-      <Title level={2}>My Connections</Title>
-      <Text type="secondary">Connect with other musicians on campus.</Text>
-      
-      <Search
-        placeholder="Find other musicians by name or instrument..."
-        onSearch={onSearch}
-        enterButton
-        size="large"
-        style={{ margin: '24px 0' }}
-      />
-      
-      <Divider />
-      
-      <Title level={4}>My Friends ({friends.length})</Title>
+  const myNetworkContent = (
+    <>
+      {friendsError && <Alert message={friendsError} type="error" showIcon style={{ marginBottom: 16 }} />}
       
       <List
+        loading={loadingFriends}
         itemLayout="horizontal"
         dataSource={friends}
         locale={{
-          emptyText: <Empty description="You haven't added any friends yet." />
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <span>
+                  You haven't followed anyone yet. <br />
+                  Switch to the <b>Find Musicians</b> tab to discover people!
+                </span>
+              }
+            />
+          )
         }}
         renderItem={(friend) => (
           <List.Item
             actions={[
-              <Button type="primary" icon={<MessageOutlined />}>
+              <Button 
+                key="message"
+                type="primary" 
+                icon={<MessageOutlined />}
+                onClick={() => navigate(`/messages/${friend._id}`)}
+              >
                 Message
               </Button>,
               <Button 
+                key="remove"
                 danger 
                 icon={<UserDeleteOutlined />}
                 onClick={() => handleRemoveFriend(friend._id, friend.name)}
-                loading={loadingFriendId === friend._id} // Set loading on this button
+                loading={actionLoadingId === friend._id}
               >
-                Remove
+                Unfollow
               </Button>,
             ]}
           >
             <List.Item.Meta
-              avatar={<Avatar icon={<UserOutlined />} />}
-              title={<Link to={`/profile/${friend._id}`}>{friend.name}</Link>}
-              description={friend.email}
+              avatar={<Avatar size={48} icon={<UserOutlined />} />}
+              title={<Link to={`/profile/${friend._id}`} style={{ fontSize: '1.1rem' }}>{friend.name}</Link>}
+              description={
+                <Space direction="vertical" size={0}>
+                  <Text type="secondary">{friend.email}</Text>
+                  {/* Show summary of skills if available */}
+                  {friend.profile?.instruments && friend.profile.instruments.length > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      {friend.profile.instruments.slice(0, 3).map(inst => (
+                        <Tag key={inst} style={{ fontSize: 10 }}>{inst}</Tag>
+                      ))}
+                    </div>
+                  )}
+                </Space>
+              }
             />
           </List.Item>
         )}
+      />
+    </>
+  );
+  
+  const findMusiciansContent = (
+    <div style={{ marginTop: 16 }}>
+      <Search
+        placeholder="Search for musicians by name (e.g. 'John')..."
+        onSearch={onGlobalSearch}
+        enterButton={<Button icon={<SearchOutlined />}>Search</Button>}
+        size="large"
+        loading={isSearching}
+        style={{ marginBottom: 32, maxWidth: 600 }}
+      />
+
+      <List
+        loading={isSearching}
+        itemLayout="horizontal"
+        dataSource={searchResults}
+        locale={{
+          emptyText: searchHasRun ? <Empty description="No musicians found matching that name." /> : <Empty description="Enter a name to start searching." />
+        }}
+        renderItem={(user) => {
+          const alreadyFriend = isAlreadyFriend(user._id);
+          return (
+            <List.Item
+              actions={[
+                alreadyFriend ? (
+                  <Button disabled>Following</Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    ghost
+                    icon={<UserAddOutlined />}
+                    onClick={() => handleAddFriend(user)}
+                    loading={actionLoadingId === user._id}
+                  >
+                    Follow
+                  </Button>
+                )
+              ]}
+            >
+              <List.Item.Meta
+                avatar={<Avatar icon={<UserOutlined />} />}
+                title={<Link to={`/profile/${user._id}`}>{user.name}</Link>}
+                description={
+                  <Space wrap>
+                    <Tag color="blue">{user.profile?.skillLevel || 'Musician'}</Tag>
+                    {user.profile?.instruments?.map(inst => (
+                      <Tag key={inst}>{inst}</Tag>
+                    ))}
+                  </Space>
+                }
+              />
+            </List.Item>
+          );
+        }}
+      />
+    </div>
+  );
+
+  return (
+    <Card style={{ borderRadius: '16px', minHeight: '80vh' }}>
+      <Title level={2} style={{ marginBottom: 24 }}>Connections</Title>
+      
+      <Tabs
+        defaultActiveKey="1"
+        type="card"
+        items={[
+          {
+            key: '1',
+            label: `My Network (${friends.length})`,
+            children: myNetworkContent,
+          },
+          {
+            key: '2',
+            label: 'Find Musicians',
+            children: findMusiciansContent,
+          },
+        ]}
       />
     </Card>
   );

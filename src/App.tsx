@@ -24,6 +24,7 @@ import MySessions from './pages/sessions/MySessions';
 import CreateSession from './pages/sessions/CreateSession';
 import EditSession from './pages/sessions/EditSession';
 import Messages from './pages/messages/Messages';
+import Chat from './pages/messages/Chat';
 
 function App() {
   return (
@@ -93,6 +94,10 @@ function App() {
             <Route 
               path="messages"
               element={<Messages />}
+            />
+            <Route 
+              path="messages/:userId"
+              element={<Chat />}
             />
           </Route>
         </Route>
