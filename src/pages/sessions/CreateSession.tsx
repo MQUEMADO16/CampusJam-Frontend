@@ -140,7 +140,7 @@ const CreateSession: React.FC = () => {
                   <Input size="large" placeholder="e.g., 1234 Campus Street, City, State USA" />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+              <Col>
                 <Form.Item
                   name="time"
                   label="Start & End Time"

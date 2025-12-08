@@ -17,7 +17,7 @@ const AccessDenied: React.FC = () => {
         title="403 - Access Denied"
         subTitle="Sorry, you are not authorized to access this page."
         extra={
-          <Link to="/">
+          <Link to="/my-sessions">
             <Button type="primary">Back Home</Button>
           </Link>
         }
