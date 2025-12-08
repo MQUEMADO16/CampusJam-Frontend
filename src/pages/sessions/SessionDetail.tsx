@@ -318,25 +318,7 @@ const handleAddToCalendar = async () => {
                   )}
                 </Space>
               </Col>
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
-                  {new Date(session.startTime).toLocaleString()}
-                  {session.endTime && ` - ${new Date(session.endTime).toLocaleString()}`}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
-                  {session.location || 'Not specified'}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><EnvironmentOutlined /> Address</Space>}>
-                  {session.address || 'Not specified'}
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
-                  <Tag>{session.genre || 'Any'}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label={<Space><InfoCircleOutlined /> Skill Level</Space>}>
-                  <Tag>{session.skillLevel}</Tag>
-                </Descriptions.Item>
-              </Descriptions>
-
+              
               {/* Right Column: Attendees */}
               <Col xs={24} md={8}>
                 <Title level={4}>
