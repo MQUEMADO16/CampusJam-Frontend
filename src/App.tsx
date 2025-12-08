@@ -22,6 +22,7 @@ import LandingPage from './pages/Landing/Landing';
 import FriendsList from './pages/profile/Connections';
 import MySessions from './pages/sessions/MySessions';
 import CreateSession from './pages/sessions/CreateSession';
+import EditSession from './pages/sessions/EditSession';
 
 function App() {
   return (
@@ -63,6 +64,10 @@ function App() {
             <Route
               path="sessions/:sessionId"
               element={<SessionDetail />}
+            />
+            <Route
+              path="sessions/:sessionId/edit"
+              element={<EditSession />}
             />
             <Route
               path="settings/profile"
