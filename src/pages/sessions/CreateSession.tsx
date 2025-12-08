@@ -30,6 +30,22 @@ import {
 const { Title } = Typography;
 const { TextArea } = Input;
 
+// Add character limits
+const CHAR_LIMS = {
+  TITLE: 100,
+  DESCRIPTION: 1000,
+  LOCATION: 200,
+} as const;
+
+const checkMaxFieldLim = (fieldName: string, maxLength: number) => ({
+  validator: (_: any, value: string) => {
+    if (!value || value.length <= maxLength) {
+      return Promise.resolve();
+    }
+    return Promise.reject(new Error(`${fieldName} cannot exceed ${maxLength} characters`));
+  },
+});
+
 // Define the shape of the form's values
 type CreateSessionFormValues = Pick<
   TSession,
@@ -108,17 +124,32 @@ const CreateSession: React.FC = () => {
             <Form.Item
               name="title"
               label="Session Title"
-              rules={[{ required: true, message: 'Please enter a title for your session.' }]}
+              rules={[
+                { required: true, message: 'Please enter a title for your session.' },
+                checkMaxFieldLim("Title", CHAR_LIMS.TITLE),
+              ]}
             >
-              <Input size="large" placeholder="e.g., Acoustic Study Break" />
+              <Input 
+                size="large" 
+                placeholder="e.g., Acoustic Study Break" 
+                maxLength={CHAR_LIMS.TITLE}
+              />
             </Form.Item>
 
             <Form.Item
               name="description"
               label="Description"
-              rules={[{ required: true, message: 'Please provide a brief description.' }]}
+              rules={[
+                { required: true, message: 'Please provide a brief description.' },
+                checkMaxFieldLim("Description", CHAR_LIMS.DESCRIPTION),
+              ]}
             >
-              <TextArea rows={4} placeholder="What's the vibe? What songs are you playing?" />
+              <TextArea 
+                rows={4} 
+                placeholder="What's the vibe? What songs are you playing?" 
+                maxLength={CHAR_LIMS.DESCRIPTION}
+                showCount
+              />
             </Form.Item>
 
             <Row gutter={16}>
@@ -126,9 +157,16 @@ const CreateSession: React.FC = () => {
                 <Form.Item
                   name="location"
                   label="Location"
-                  rules={[{ required: true, message: 'Where is this happening?' }]}
+                  rules={[
+                    { required: true, message: 'Where is this happening?' },
+                    checkMaxFieldLim("Location", CHAR_LIMS.LOCATION),
+                  ]}
                 >
-                  <Input size="large" placeholder="e.g., Campus Quad or Room 201" />
+                  <Input 
+                    size="large" 
+                    placeholder="e.g., Campus Quad or Room 201" 
+                    maxLength={CHAR_LIMS.LOCATION}
+                  />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
