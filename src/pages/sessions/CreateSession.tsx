@@ -52,6 +52,7 @@ type CreateSessionFormValues = Pick<
   | 'title'
   | 'description'
   | 'location'
+  | 'address'    
   | 'genre'
   | 'skillLevel'
   | 'instrumentsNeeded'
@@ -169,6 +170,15 @@ const CreateSession: React.FC = () => {
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
+                <Form.Item
+                  name="address"
+                  label="Address"
+                  rules={[{ required: true, message: 'What?' }]}
+                >
+                  <Input size="large" placeholder="e.g., 1234 Campus Street, City, State USA" />
+                </Form.Item>
+              </Col>
+              <Col>
                 <Form.Item
                   name="time"
                   label="Start & End Time"
