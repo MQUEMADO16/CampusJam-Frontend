@@ -6,6 +6,7 @@ import {
   UserOutlined, // For "My Sessions"
   TeamOutlined, // For "My Connections"
   PlusOutlined, // For "Create Session"
+  MessageOutlined, // For "Messages"
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
 
@@ -33,6 +34,11 @@ const DashboardLayout: React.FC = () => {
       key: '/connections', // This is for the social graph
       icon: <TeamOutlined />,
       label: 'My Connections',
+    },
+    {
+      key: '/messages', // This is for messaging
+      icon: <MessageOutlined />,
+      label: 'Messages',
     },
   ];
 

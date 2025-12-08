@@ -23,6 +23,7 @@ import FriendsList from './pages/profile/Connections';
 import MySessions from './pages/sessions/MySessions';
 import CreateSession from './pages/sessions/CreateSession';
 import EditSession from './pages/sessions/EditSession';
+import Messages from './pages/messages/Messages';
 
 function App() {
   return (
@@ -88,6 +89,10 @@ function App() {
             <Route 
               path="sessions/create"
               element={<CreateSession />}
+            />
+            <Route 
+              path="messages"
+              element={<Messages />}
             />
           </Route>
         </Route>
