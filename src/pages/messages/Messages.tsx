@@ -211,8 +211,8 @@ const Messages: React.FC = () => {
               style={{
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',
-                padding: '16px',
-                borderRadius: '8px',
+                padding: '20px 24px', // Increased padding for larger look
+                borderRadius: '16px', // Increased border radius
                 backgroundColor: isUnread ? '#f0f5ff' : 'transparent', // Light blue background if unread
               }}
               className="message-list-item"
@@ -228,8 +228,8 @@ const Messages: React.FC = () => {
                 }
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Text strong={isUnread}>{item.otherUser.name}</Text>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text strong={isUnread} style={{ fontSize: '16px' }}>{item.otherUser.name}</Text>
+                    <Text type="secondary" style={{ fontSize: '13px' }}>
                       {new Date(item.lastMessage.createdAt).toLocaleDateString()}
                     </Text>
                   </div>
@@ -239,7 +239,7 @@ const Messages: React.FC = () => {
                     type={isUnread ? undefined : 'secondary'} 
                     strong={isUnread}
                     ellipsis 
-                    style={{ maxWidth: '80%' }}
+                    style={{ maxWidth: '80%', fontSize: '14px' }}
                   >
                     {isOwnMessage ? 'You: ' : ''}
                     {item.lastMessage.content}

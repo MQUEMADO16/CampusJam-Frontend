@@ -20,7 +20,9 @@ import { useAuth } from '../../context/auth.context';
 import { messageService } from '../../services/message.service';
 import { userService } from '../../services/user.service';
 import { TMessage, TUser } from '../../types';
-import { useSocket } from '../../context/socket.context'; 
+
+// 1. Import the socket hook
+import { useSocket } from '../../context/socket.context';
 
 const { Title, Text } = Typography;
 
@@ -47,10 +49,11 @@ const MessagesArea = styled.div`
 `;
 
 const MessageBubble = styled.div<{ isOwn: boolean }>`
-  max-width: 85%; /* Increased width from 70% */
-  padding: 12px 20px; /* Increased padding */
-  border-radius: 16px;
-  font-size: 15px;
+  max-width: 85%; 
+  min-width: 120px; /* Added min-width so short messages aren't tiny */
+  padding: 16px 24px; /* Increased padding for larger look */
+  border-radius: 20px; /* Increased border radius for rounder look */
+  font-size: 16px; /* Increased font size */
   line-height: 1.5;
   position: relative;
   word-wrap: break-word;
@@ -62,12 +65,12 @@ const MessageBubble = styled.div<{ isOwn: boolean }>`
   border: ${(props) => (props.isOwn ? 'none' : '1px solid #e0e0e0')};
   
   // Specific corner rounding
-  border-bottom-right-radius: ${(props) => (props.isOwn ? '4px' : '16px')};
-  border-bottom-left-radius: ${(props) => (props.isOwn ? '16px' : '4px')};
+  border-bottom-right-radius: ${(props) => (props.isOwn ? '4px' : '20px')};
+  border-bottom-left-radius: ${(props) => (props.isOwn ? '20px' : '4px')};
 `;
 
 const Timestamp = styled.div<{ isOwn: boolean }>`
-  font-size: 11px;
+  font-size: 12px; /* Slightly increased */
   color: #8c8c8c;
   margin-top: 4px;
   text-align: ${(props) => (props.isOwn ? 'right' : 'left')};
@@ -79,8 +82,7 @@ const Chat: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   
-  // Use global socket
-  const { socket } = useSocket(); 
+  const { socket } = useSocket();
 
   const [otherUser, setOtherUser] = useState<TUser | null>(null);
   const [messages, setMessages] = useState<TMessage[]>([]);
@@ -125,34 +127,32 @@ const Chat: React.FC = () => {
     fetchData();
   }, [otherUserId, currentUser]);
 
-  // Socket Listener for Chat Page ---
+  // Socket Listener for Chat Page
   useEffect(() => {
     if (!socket) return;
 
-    // Define the handler function so we can remove it later
+    // Handler for incoming messages
     const handleReceiveMessage = (incomingMessage: TMessage) => {
-      // Only add message if it belongs to THIS open chat
+      // Determine sender ID (could be populated object or string)
       const senderId = typeof incomingMessage.sender === 'string' 
         ? incomingMessage.sender 
         : incomingMessage.sender._id;
 
-      // If the message is from the person we're talking to, add it
+      // Only update UI if the message is from the user we are currently viewing
       if (senderId === otherUserId) {
         setMessages((prev) => [...prev, incomingMessage]);
       }
     };
 
-    // Attach listener
+    // Attach the event listener
     socket.on('receive_message', handleReceiveMessage);
 
-    // Removes THIS specific listener when component unmounts
-    // This prevents duplicate handlers if the user navigates away and back
+    // Cleanup listener on unmount or when dependencies change
     return () => {
       socket.off('receive_message', handleReceiveMessage);
     };
-  }, [socket, otherUserId]); // Re-run if socket or active chat changes
+  }, [socket, otherUserId]);
 
-  // Scroll on new messages
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
