@@ -9,7 +9,6 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
-// Define backend URL (Make sure this matches your backend port)
 const SOCKET_ENDPOINT = process.env.REACT_APP_CAMPUS_JAM_API_URL; 
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -17,19 +16,27 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Use the ID specifically to prevent unnecessary reconnects if the user object reference changes
+  const userId = user?._id || (user as any)?.id;
+
   useEffect(() => {
     let newSocket: Socket | null = null;
 
-    if (user) {
-      newSocket = io(SOCKET_ENDPOINT);
+    if (userId) {
+      newSocket = io(SOCKET_ENDPOINT, {
+        transports: ['websocket', 'polling'], // Try websocket first, then polling
+        reconnectionAttempts: 5,
+      });
 
       newSocket.on('connect', () => {
         console.log('Socket connected:', newSocket?.id);
         setIsConnected(true);
         // Join the user's personal room immediately upon connection
-        // Ensure we use the correct ID property (id or _id)
-        const userId = user._id || (user as any).id;
         newSocket?.emit('join_chat', userId);
+      });
+
+      newSocket.on('connect_error', (err) => {
+        console.warn('Socket connection error:', err.message);
       });
 
       newSocket.on('disconnect', () => {
@@ -47,7 +54,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsConnected(false);
       }
     };
-  }, [user]); 
+  }, [userId]); 
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>
