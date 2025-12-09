@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   List,
   Spin,
@@ -12,28 +12,24 @@ import {
   Input,
   Select,
   Radio,
-  Space,
-  Table,
   Tag,
+  Table
 } from 'antd';
 import { isAxiosError } from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 
-// Import services, components, and constants
 import { sessionService, TSessionFeed } from '../../services/session.service';
 import SessionCard from '../../components/features/SessionCard';
 import {
   INSTRUMENT_OPTIONS,
   GENRE_OPTIONS,
   SKILL_LEVEL_OPTIONS,
-} from '../../constants/appData'; // Import constants for filters
+} from '../../constants/appData';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-const { Option } = Select;
 
-// Define filter state shape
 interface SessionFilters {
   search: string;
   genres: string[];
@@ -41,11 +37,6 @@ interface SessionFilters {
   skills: string[];
 }
 
-/**
- * The main public sessions dashboard page.
- * Fetches all sessions and allows for client-side filtering
- * and switching between card and table views.
- */
 const Dashboard: React.FC = () => {
   const [allSessions, setAllSessions] = useState<TSessionFeed[]>([]);
   const [filteredSessions, setFilteredSessions] = useState<TSessionFeed[]>([]);
@@ -247,7 +238,7 @@ const Dashboard: React.FC = () => {
         <Row gutter={[16, 16]}>
           <Col xs={24} md={8}>
             <Search
-              placeholder="Search by title, host, or description"
+              placeholder="Search..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
               allowClear
@@ -258,7 +249,7 @@ const Dashboard: React.FC = () => {
               mode="multiple"
               allowClear
               style={{ width: '100%' }}
-              placeholder="Filter by genre"
+              placeholder="Genre"
               value={filters.genres}
               onChange={(value) => handleFilterChange('genres', value)}
               options={GENRE_OPTIONS}
@@ -269,7 +260,7 @@ const Dashboard: React.FC = () => {
               mode="multiple"
               allowClear
               style={{ width: '100%' }}
-              placeholder="Filter by instruments"
+              placeholder="Instruments"
               value={filters.instruments}
               onChange={(value) => handleFilterChange('instruments', value)}
               options={INSTRUMENT_OPTIONS}
@@ -280,7 +271,7 @@ const Dashboard: React.FC = () => {
               mode="multiple"
               allowClear
               style={{ width: '100%' }}
-              placeholder="Filter by skill level"
+              placeholder="Skill Level"
               value={filters.skills}
               onChange={(value) => handleFilterChange('skills', value)}
               options={SKILL_LEVEL_OPTIONS}
@@ -295,9 +286,15 @@ const Dashboard: React.FC = () => {
       {viewMode === 'card' ? (
         <List
           dataSource={filteredSessions}
+          // UPDATED GRID CONFIGURATION: 3 columns max
           grid={{
             gutter: 24,
-            xs: 1, sm: 2, md: 2, lg: 3, xl: 4, xxl: 4,
+            xs: 1,
+            sm: 1, // Single column on small devices for better readability
+            md: 2,
+            lg: 3,
+            xl: 3, // Changed from 4 to 3
+            xxl: 3, // Changed from 4 to 3
           }}
           locale={{ emptyText: customEmptyView }}
           renderItem={(session) => (
