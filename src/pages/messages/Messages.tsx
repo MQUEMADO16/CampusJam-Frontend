@@ -17,6 +17,7 @@ import { isAxiosError } from 'axios';
 // Import service
 import { messageService } from '../../services/message.service';
 import { useAuth } from '../../context/auth.context';
+import { useSocket } from '../../context/socket.context';
 
 const { Title, Text } = Typography;
 
@@ -44,6 +45,7 @@ const Messages: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket } = useSocket(); // Use global socket
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -72,6 +74,69 @@ const Messages: React.FC = () => {
 
     fetchConversations();
   }, [user]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleInboxMessage = (newMessage: any) => {
+      setConversations((prev) => {
+        const senderId = typeof newMessage.sender === 'string' 
+          ? newMessage.sender 
+          : newMessage.sender._id;
+
+        // Find if we already have a conversation with this sender
+        const existingIndex = prev.findIndex(c => c.otherUser._id === senderId);
+        
+        let updatedConvos = [...prev];
+
+        if (existingIndex !== -1) {
+          // Update existing conversation
+          const conversation = { ...updatedConvos[existingIndex] };
+          
+          // Update last message
+          conversation.lastMessage = {
+            content: newMessage.content,
+            createdAt: newMessage.createdAt,
+            read: false, // New incoming messages are unread
+            sender: senderId
+          };
+
+          // Remove from old position and move to top
+          updatedConvos.splice(existingIndex, 1);
+          updatedConvos.unshift(conversation);
+        } else {
+          // New conversation
+          // newMessage.sender should be a populated user object from the backend
+          const senderObj = newMessage.sender; 
+          
+          if (typeof senderObj === 'object') {
+            const newConversation: TConversation = {
+              otherUser: {
+                _id: senderObj._id,
+                name: senderObj.name,
+                email: senderObj.email
+              },
+              lastMessage: {
+                content: newMessage.content,
+                createdAt: newMessage.createdAt,
+                read: false,
+                sender: senderId
+              }
+            };
+            updatedConvos.unshift(newConversation);
+          }
+        }
+        
+        return updatedConvos;
+      });
+    };
+
+    socket.on('receive_message', handleInboxMessage);
+
+    return () => {
+      socket.off('receive_message', handleInboxMessage);
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (!searchText) {
@@ -148,11 +213,12 @@ const Messages: React.FC = () => {
                 transition: 'background-color 0.2s',
                 padding: '16px',
                 borderRadius: '8px',
+                backgroundColor: isUnread ? '#f0f5ff' : 'transparent', // Light blue background if unread
               }}
               className="message-list-item"
               onClick={() => navigate(`/messages/${item.otherUser._id}`)}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fafafa')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isUnread ? '#e6f7ff' : '#fafafa')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isUnread ? '#f0f5ff' : 'transparent')}
             >
               <List.Item.Meta
                 avatar={
@@ -162,7 +228,7 @@ const Messages: React.FC = () => {
                 }
                 title={
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Text strong>{item.otherUser.name}</Text>
+                    <Text strong={isUnread}>{item.otherUser.name}</Text>
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                       {new Date(item.lastMessage.createdAt).toLocaleDateString()}
                     </Text>

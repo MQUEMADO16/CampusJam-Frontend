@@ -20,8 +20,11 @@ import { useAuth } from '../../context/auth.context';
 import { messageService } from '../../services/message.service';
 import { userService } from '../../services/user.service';
 import { TMessage, TUser } from '../../types';
+import { useSocket } from '../../context/socket.context'; 
 
 const { Title, Text } = Typography;
+
+// --- Styled Components for Chat Bubbles ---
 
 const ChatContainer = styled.div`
   display: flex;
@@ -75,6 +78,9 @@ const Chat: React.FC = () => {
   const { userId: otherUserId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  
+  // Use global socket
+  const { socket } = useSocket(); 
 
   const [otherUser, setOtherUser] = useState<TUser | null>(null);
   const [messages, setMessages] = useState<TMessage[]>([]);
@@ -99,6 +105,8 @@ const Chat: React.FC = () => {
       setError(null);
 
       try {
+        // Fetch the other user's details (for the header)
+        // and the message history in parallel
         const [userResponse, messagesResponse] = await Promise.all([
           userService.getUserById(otherUserId),
           messageService.getDirectMessages(otherUserId),
@@ -117,6 +125,34 @@ const Chat: React.FC = () => {
     fetchData();
   }, [otherUserId, currentUser]);
 
+  // Socket Listener for Chat Page ---
+  useEffect(() => {
+    if (!socket) return;
+
+    // Define the handler function so we can remove it later
+    const handleReceiveMessage = (incomingMessage: TMessage) => {
+      // Only add message if it belongs to THIS open chat
+      const senderId = typeof incomingMessage.sender === 'string' 
+        ? incomingMessage.sender 
+        : incomingMessage.sender._id;
+
+      // If the message is from the person we're talking to, add it
+      if (senderId === otherUserId) {
+        setMessages((prev) => [...prev, incomingMessage]);
+      }
+    };
+
+    // Attach listener
+    socket.on('receive_message', handleReceiveMessage);
+
+    // Removes THIS specific listener when component unmounts
+    // This prevents duplicate handlers if the user navigates away and back
+    return () => {
+      socket.off('receive_message', handleReceiveMessage);
+    };
+  }, [socket, otherUserId]); // Re-run if socket or active chat changes
+
+  // Scroll on new messages
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);

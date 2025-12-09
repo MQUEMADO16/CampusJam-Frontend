@@ -6,6 +6,7 @@ import './index.css';
 
 import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './context/auth.context';
+import { SocketProvider } from './context/socket.context';
 
 const APP_THEME = {
   token: {
@@ -35,7 +36,9 @@ root.render(
     <ConfigProvider theme={APP_THEME}>
       <AntApp>
         <AuthProvider>
-          <App />
+          <SocketProvider>
+            <App />
+          </SocketProvider>
         </AuthProvider>
       </AntApp>
     </ConfigProvider>

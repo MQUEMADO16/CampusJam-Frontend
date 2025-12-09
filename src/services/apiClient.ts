@@ -1,10 +1,9 @@
 // This file houses configuration for interfacing with the API.
 
 import axios from 'axios';
-import { TUser, TSession, TMessage, TReport } from '../types';
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_CAMPUS_JAM_API_URL,
+  baseURL: `${process.env.REACT_APP_CAMPUS_JAM_API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
