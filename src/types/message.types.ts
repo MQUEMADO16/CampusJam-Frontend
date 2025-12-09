@@ -7,7 +7,7 @@ export type TMessage = {
   // Sender can be just an ID string OR a populated User object
   sender: string | TUser; 
   createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  updatedAt?: string; // ISO date string
 
   // Present only if it's a message in a Jam Session
   session?: string; 

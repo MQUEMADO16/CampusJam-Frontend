@@ -21,7 +21,6 @@ import { messageService } from '../../services/message.service';
 import { userService } from '../../services/user.service';
 import { TMessage, TUser } from '../../types';
 
-// 1. Import the socket hook
 import { useSocket } from '../../context/socket.context';
 
 const { Title, Text } = Typography;
@@ -50,10 +49,10 @@ const MessagesArea = styled.div`
 
 const MessageBubble = styled.div<{ isOwn: boolean }>`
   max-width: 85%; 
-  min-width: 120px; /* Added min-width so short messages aren't tiny */
-  padding: 16px 24px; /* Increased padding for larger look */
-  border-radius: 20px; /* Increased border radius for rounder look */
-  font-size: 16px; /* Increased font size */
+  min-width: 120px;
+  padding: 16px 24px;
+  border-radius: 20px;
+  font-size: 16px;
   line-height: 1.5;
   position: relative;
   word-wrap: break-word;
@@ -70,7 +69,7 @@ const MessageBubble = styled.div<{ isOwn: boolean }>`
 `;
 
 const Timestamp = styled.div<{ isOwn: boolean }>`
-  font-size: 12px; /* Slightly increased */
+  font-size: 12px;
   color: #8c8c8c;
   margin-top: 4px;
   text-align: ${(props) => (props.isOwn ? 'right' : 'left')};
@@ -133,13 +132,16 @@ const Chat: React.FC = () => {
 
     // Handler for incoming messages
     const handleReceiveMessage = (incomingMessage: TMessage) => {
-      // Determine sender ID (could be populated object or string)
-      const senderId = typeof incomingMessage.sender === 'string' 
-        ? incomingMessage.sender 
-        : incomingMessage.sender._id;
+      console.log('Socket received message:', incomingMessage);
 
-      // Only update UI if the message is from the user we are currently viewing
-      if (senderId === otherUserId) {
+      const rawSender = incomingMessage.sender;
+      const senderId = typeof rawSender === 'string' 
+        ? rawSender 
+        : rawSender._id;
+
+      // Convert both to String() before comparing.
+      // This prevents "ObjectId('abc') !== 'abc'" errors.
+      if (String(senderId) === String(otherUserId)) {
         setMessages((prev) => [...prev, incomingMessage]);
       }
     };
@@ -170,9 +172,11 @@ const Chat: React.FC = () => {
         content: contentToSend,
       });
 
+      // Optimistically add the returned message
       setMessages((prev) => [...prev, response.data.data]);
     } catch (err) {
       console.error('Failed to send message:', err);
+      // Revert input on failure
       setNewMessage(contentToSend); 
     } finally {
       setIsSending(false);
@@ -238,8 +242,13 @@ const Chat: React.FC = () => {
             </div>
           ) : (
             messages.map((msg) => {
-              const senderId = typeof msg.sender === 'string' ? msg.sender : msg.sender._id;
-              const isOwn = senderId === currentUser?._id;
+              // Helper to safely get ID string whether it is populated or not
+              const rawSender = msg.sender;
+              const senderId = typeof rawSender === 'string' ? rawSender : rawSender._id;
+              
+              // Convert both to String() before comparing.
+              // This ensures your own messages always appear on the right side.
+              const isOwn = String(senderId) === String(currentUser?._id);
 
               return (
                 <div key={msg._id} style={{ alignSelf: isOwn ? 'flex-end' : 'flex-start', maxWidth: '100%', display: 'flex', flexDirection: 'column' }}>
