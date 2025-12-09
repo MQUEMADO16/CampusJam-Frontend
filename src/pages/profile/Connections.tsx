@@ -30,24 +30,22 @@ import { TUser } from '../../types';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
+
 type Friend = TUser; 
 
 const Connections: React.FC = () => {
   const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
   const navigate = useNavigate();
 
-  // State for "My Network" Tab
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  // State for "Find Musicians" Tab 
   const [searchResults, setSearchResults] = useState<TUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchHasRun, setSearchHasRun] = useState(false); // To show "No results" only after search
 
-  // Fetch Friends (My Network)
   useEffect(() => {
     if (authIsLoading) return;
     
