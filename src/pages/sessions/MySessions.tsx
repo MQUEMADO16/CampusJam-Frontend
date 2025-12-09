@@ -35,14 +35,15 @@ const SessionList: React.FC<{ sessions: TSessionFeed[]; emptyView: React.ReactNo
   return (
     <List
       dataSource={sessions}
+      // UPDATED GRID CONFIGURATION: 3 columns max to match Dashboard
       grid={{
         gutter: 24,
         xs: 1,
-        sm: 2,
+        sm: 1, // Single column on small devices for better readability
         md: 2,
         lg: 3,
-        xl: 4,
-        xxl: 4,
+        xl: 3, // Changed from 4 to 3
+        xxl: 3, // Changed from 4 to 3
       }}
       locale={{
         emptyText: emptyView,

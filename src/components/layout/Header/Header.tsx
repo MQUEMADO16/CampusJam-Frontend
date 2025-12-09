@@ -211,6 +211,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           width: '100%',
           zIndex: 10,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          padding: '0 24px'
         }}
       >
         {/* Logo Section (Always visible) */}

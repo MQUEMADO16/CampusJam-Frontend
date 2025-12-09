@@ -217,7 +217,7 @@ const SessionCard: React.FC<SessionCardProps> = ({ session }) => {
                 </Tag>
               ))
             ) : (
-              <Tag bordered={false} style={{ margin: 0 }}>Open Jam</Tag>
+              <Tag bordered={false} color="#bababa" style={{ borderRadius: '12px', margin: 0 }}>Open Jam</Tag>
             )}
           </div>
         </div>

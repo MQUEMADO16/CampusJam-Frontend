@@ -174,25 +174,25 @@ const SessionDetail: React.FC = () => {
 
 const handleAddToCalendar = async () => {
     if (!session) {
-      messageApi.error('Session data not loaded yet.'); // Changed from message.error
+      messageApi.error('Session data not loaded yet.'); 
       return;
     }
 
-    messageApi.loading('Adding to your calendar...', 0); // Changed from message.loading
+    messageApi.loading('Adding to your calendar...', 0); 
 
     try {
       const response = await calendarService.addSessionToCalendar(session._id);
       
-      messageApi.destroy(); // Changed from message.destroy
-      messageApi.success(response.message); // Changed from message.success
+      messageApi.destroy(); 
+      messageApi.success(response.message); 
 
     } catch (err: any) {
-      messageApi.destroy(); // Changed from message.destroy
+      messageApi.destroy(); 
       let msg = 'Failed to add event.';
       if (err.response?.data?.message) {
         msg = err.response.data.message;
       }
-      messageApi.error(msg); // Changed from message.error
+      messageApi.error(msg); 
     }
   };
 
@@ -299,6 +299,9 @@ const handleAddToCalendar = async () => {
                   <Descriptions.Item label={<Space><EnvironmentOutlined /> Location</Space>}>
                     {session.location || 'Not specified'}
                   </Descriptions.Item>
+                  <Descriptions.Item label={<Space><EnvironmentOutlined /> Address</Space>}>
+                    {session.address || 'Not specified'}
+                  </Descriptions.Item>
                   <Descriptions.Item label={<Space><CustomerServiceOutlined /> Genre</Space>}>
                     <Tag>{session.genre || 'Any'}</Tag>
                   </Descriptions.Item>
@@ -352,4 +355,3 @@ const handleAddToCalendar = async () => {
 };
 
 export default SessionDetail;
-
