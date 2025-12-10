@@ -25,18 +25,18 @@ import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   MinusCircleOutlined,
-  CheckOutlined
+  CheckOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  ArrowLeftOutlined 
 } from '@ant-design/icons';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
-// --- Import Services, Context, and Types ---
 import { sessionService } from '../../services/session.service';
 import { calendarService } from '../../services/calendar.service';
 import { useAuth } from '../../context/auth.context';
 import { TSession, TUser } from '../../types';
-
-// --- Import Error Pages ---
 import AccessDenied from '../AccessDenied';
 import NotFound from '../NotFound';
 
@@ -59,7 +59,6 @@ type TPopulatedSession = Omit<TSession, 'invitedUsers' | 'attendees' | 'host'> &
 };
 
 const SessionDetail: React.FC = () => {
-  // --- State and Hooks ---
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const { user: currentUser, isLoading: authIsLoading } = useAuth();
@@ -67,25 +66,21 @@ const SessionDetail: React.FC = () => {
   const [session, setSession] = useState<TPopulatedSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
-  const [joinLoading, setJoinLoading] = useState(false);
   
-  // --- New Calendar States ---
+  const [joinLoading, setJoinLoading] = useState(false);
   const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
   const [calendarCheckLoading, setCalendarCheckLoading] = useState(false);
 
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
-  // --- Data Fetching Effect ---
+  // --- Fetch Data ---
   const fetchSession = useCallback(async () => {
     if (!sessionId) {
       setErrorType('404');
       return;
     }
-    
-    // Only set loading true if we don't have data yet (prevents UI flash on refresh)
     setIsLoading(prev => !session ? true : prev);
-    
     try {
       setErrorType(null);
       const response = await sessionService.getSessionById(sessionId);
@@ -94,9 +89,7 @@ const SessionDetail: React.FC = () => {
       if (isAxiosError(error)) {
         if (error.response?.status === 404) setErrorType('404');
         else setErrorType('403');
-      } else {
-        setErrorType('403');
-      }
+      } else setErrorType('403');
       console.error('Failed to fetch session:', error);
     } finally {
       setIsLoading(false);
@@ -107,61 +100,47 @@ const SessionDetail: React.FC = () => {
     fetchSession();
   }, [fetchSession]);
 
-  // --- Check Calendar Status ---
+  // --- Check Calendar ---
   useEffect(() => {
     const checkCalendarStatus = async () => {
       if (!session || !currentUser) return;
-      
       setCalendarCheckLoading(true);
-
       try {
         const rawResponse = await calendarService.getCalendarEvents();
-        
-        // Handle wrapped vs raw array response
         const events = Array.isArray(rawResponse) ? rawResponse : (rawResponse.data || []);
         
         const sessionTime = new Date(session.startTime).getTime();
         const sessionTitle = session.title.trim().toLowerCase();
 
         const isAlreadyAdded = events.some((event: any) => {
-          // Safety check: ensure event has start time
           const eventTimeStr = event.start?.dateTime || event.start?.date;
           if (!eventTimeStr) return false;
-
           const eventTime = new Date(eventTimeStr).getTime();
           const eventTitle = (event.summary || '').trim().toLowerCase();
           
-          // Match Logic: 5 minute buffer (300,000ms) to account for slight drifts
-          const timeDiff = Math.abs(eventTime - sessionTime);
-          const isTimeMatch = timeDiff < 300000; 
-          const isTitleMatch = eventTitle === sessionTitle;
-
-          return isTitleMatch && isTimeMatch;
+          return (eventTitle === sessionTitle) && (Math.abs(eventTime - sessionTime) < 300000);
         });
 
         setIsAddedToCalendar(isAlreadyAdded);
       } catch (err) {
-        console.error("Failed to check calendar status:", err);
         setIsAddedToCalendar(false);
       } finally {
         setCalendarCheckLoading(false);
       }
     };
-
     checkCalendarStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?._id, currentUser?._id]);
 
-  // --- Button Handlers ---
+  // --- Action Handlers ---
+  const handleGoBack = () => navigate(-1);
+
   const handleJoinSession = () => {
     if (!currentUser || !session) return;
-    
     modal.confirm({
       title: 'Join Session',
       content: 'Are you sure you want to join this session?',
-      okText: 'Join Session',
-      cancelText: 'Cancel',
-      width: 400,
+      okText: 'Join',
       onOk: async () => {
         setJoinLoading(true);
         try {
@@ -169,7 +148,7 @@ const SessionDetail: React.FC = () => {
           messageApi.success("You've joined the session!");
           await fetchSession();
         } catch (err) {
-          messageApi.error("Failed to join session. You may already be an attendee.");
+          messageApi.error("Failed to join session.");
         } finally {
           setJoinLoading(false);
         }
@@ -179,13 +158,10 @@ const SessionDetail: React.FC = () => {
 
   const handleLeaveSession = () => {
     if (!currentUser || !session) return;
-    
     modal.confirm({
       title: 'Leave Session',
       content: 'Are you sure you want to leave this session?',
-      okText: 'Leave Session',
-      cancelText: 'Cancel',
-      width: 400,
+      okText: 'Leave',
       onOk: async () => {
         setJoinLoading(true);
         try {
@@ -201,29 +177,115 @@ const SessionDetail: React.FC = () => {
     });
   };
 
+  const handleDeleteSession = () => {
+    if (!session) return;
+    modal.confirm({
+      title: 'Delete Session',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Are you sure you want to delete this session? This action cannot be undone.',
+      okText: 'Delete Session',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          await sessionService.deleteSessionById(session._id);
+          message.success('Session deleted.');
+          navigate(-1); 
+        } catch (error) {
+          message.error('Failed to delete session.');
+        }
+      },
+    });
+  };
+
   const handleAddToCalendar = async () => {
     if (!session) return;
-
-    // Optimistic UI Update
     setIsAddedToCalendar(true);
     messageApi.loading({ content: 'Adding to your calendar...', key: 'calAdd' }); 
-
     try {
       await calendarService.addSessionToCalendar(session._id);
       messageApi.success({ content: 'Added to Google Calendar!', key: 'calAdd' }); 
     } catch (err: any) {
-      // Revert if failed
       setIsAddedToCalendar(false);
-      
-      let msg = 'Failed to add event.';
-      if (err.response?.data?.message) {
-        msg = err.response.data.message;
-      }
-      messageApi.error({ content: msg, key: 'calAdd' }); 
+      messageApi.error({ content: err.response?.data?.message || 'Failed to add event.', key: 'calAdd' }); 
     }
   };
 
-  // --- Render Logic ---
+  // --- Render Action Buttons ---
+  const renderActionButtons = () => {
+    const isHost = currentUser?._id === session?.host?._id;
+    const isAttending = session?.attendees.some(u => u._id === currentUser?._id);
+
+    const calendarButton = (
+       <Button 
+         key="calendar"
+         icon={isAddedToCalendar ? <CheckOutlined /> : <CalendarOutlined />} 
+         onClick={handleAddToCalendar}
+         disabled={isAddedToCalendar || calendarCheckLoading}
+         loading={calendarCheckLoading && !isAddedToCalendar} 
+       >
+         {calendarCheckLoading ? 'Checking...' : (isAddedToCalendar ? 'Added' : 'Add to Calendar')}
+       </Button>
+    );
+
+    if (isHost) {
+      return (
+        <Space wrap>
+          {/* Host Safe Actions */}
+          <Link to={`/sessions/${session!._id}/edit`}>
+            <Button icon={<EditOutlined />}>Edit Session</Button>
+          </Link>
+          {calendarButton}
+
+          <Divider type="vertical" style={{ height: '24px', borderColor: '#d9d9d9' }} />
+
+          {/* Host Destructive Action */}
+          <Button 
+            danger 
+            icon={<DeleteOutlined />} 
+            onClick={handleDeleteSession}
+          >
+            Delete
+          </Button>
+        </Space>
+      );
+    }
+
+    if (isAttending) {
+      return (
+        <Space wrap>
+          {/* Attendee Safe Action */}
+          {calendarButton}
+
+          <Divider type="vertical" style={{ height: '24px', borderColor: '#d9d9d9' }} />
+
+          {/* Attendee Destructive Action */}
+          <Button
+            danger
+            icon={<MinusCircleOutlined />}
+            onClick={handleLeaveSession}
+            loading={joinLoading}
+          >
+            Leave Session
+          </Button>
+        </Space>
+      );
+    }
+
+    // Default: Join Button
+    return (
+      <Button
+        type="primary"
+        icon={<CheckCircleOutlined />}
+        onClick={handleJoinSession}
+        loading={joinLoading}
+      >
+        Join Session
+      </Button>
+    );
+  };
+
+  // --- Main Render ---
 
   if (authIsLoading || (!session && isLoading)) {
     return (
@@ -237,12 +299,6 @@ const SessionDetail: React.FC = () => {
   if (errorType === '403') return <AccessDenied />;
   if (!session) return <NotFound />; 
 
-  const isHost = currentUser?._id === session.host?._id;
-  
-  const isAttending = session.attendees.some(
-    (attendee) => attendee._id === currentUser?._id
-  );
-
   return (
     <>
       {modalContextHolder}
@@ -251,67 +307,29 @@ const SessionDetail: React.FC = () => {
         <Col xs={24} md={22} lg={20} xl={18}>
           <Card style={{ width: '100%', borderRadius: '16px' }}>
             
-            {/* --- Header: Title and Actions --- */}
+            <Row style={{ marginBottom: 16 }}>
+              <Button type="text" icon={<ArrowLeftOutlined />} onClick={handleGoBack} style={{ paddingLeft: 0 }}>
+                Back
+              </Button>
+            </Row>
+
             <Row justify="space-between" align="top" gutter={[16, 16]}>
               <Col>
-                <Title level={2} style={{ marginBottom: 8 }}>
-                  {session.title}
-                </Title>
+                <Title level={2} style={{ marginBottom: 8 }}>{session.title}</Title>
                 <StatusTag status={session.status} />
               </Col>
+              
               <Col>
-                <Space wrap>
-                  {isHost ? (
-                    <Link to={`/sessions/${session._id}/edit`}>
-                      <Button icon={<EditOutlined />}>Edit Session</Button>
-                    </Link>
-                  ) : isAttending ? (
-                    <Button
-                      type="default"
-                      danger
-                      icon={<MinusCircleOutlined />}
-                      onClick={handleLeaveSession}
-                      loading={joinLoading}
-                    >
-                      Leave Session
-                    </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      icon={<CheckCircleOutlined />}
-                      onClick={handleJoinSession}
-                      loading={joinLoading}
-                    >
-                      Join Session
-                    </Button>
-                  )}
-                  
-                  {/* Calendar Button: Render if Host OR Attending */}
-                  {(isHost || isAttending) && (
-                    <Button 
-                      icon={isAddedToCalendar ? <CheckOutlined /> : <CalendarOutlined />} 
-                      onClick={handleAddToCalendar}
-                      // Disable if added OR currently checking
-                      disabled={isAddedToCalendar || calendarCheckLoading}
-                      loading={calendarCheckLoading && !isAddedToCalendar} 
-                    >
-                      {calendarCheckLoading ? 'Checking...' : (isAddedToCalendar ? 'Added to Calendar' : 'Add to Calendar')}
-                    </Button>
-                  )}
-                </Space>
+                {renderActionButtons()}
               </Col>
             </Row>
 
             <Divider />
 
-            {/* --- Main Content: Details + Attendees --- */}
             <Row gutter={[32, 24]}>
-              {/* Left Column: Details */}
               <Col xs={24} md={16}>
                 <Title level={4}>Description</Title>
-                <Paragraph>
-                  {session.description || 'No description provided.'}
-                </Paragraph>
+                <Paragraph>{session.description || 'No description provided.'}</Paragraph>
 
                 <Title level={4} style={{ marginTop: 24 }}>Details</Title>
                 <Descriptions bordered column={1} size="small">
@@ -323,9 +341,7 @@ const SessionDetail: React.FC = () => {
                           {session.host.name}
                         </Space>
                       </Link>
-                    ) : (
-                      <Text type="secondary">User not found</Text>
-                    )}
+                    ) : <Text type="secondary">Unknown</Text>}
                   </Descriptions.Item>
                   <Descriptions.Item label={<Space><CalendarOutlined /> Time</Space>}>
                     {new Date(session.startTime).toLocaleString()}
@@ -351,13 +367,10 @@ const SessionDetail: React.FC = () => {
                     session.instrumentsNeeded.map((inst) => (
                       <Tag key={inst} color="blue">{inst}</Tag>
                     ))
-                  ) : (
-                    <Text type="secondary">All instruments welcome!</Text>
-                  )}
+                  ) : <Text type="secondary">All instruments welcome!</Text>}
                 </Space>
               </Col>
               
-              {/* Right Column: Attendees */}
               <Col xs={24} md={8}>
                 <Title level={4}>
                   <TeamOutlined style={{ marginRight: 8 }} />
