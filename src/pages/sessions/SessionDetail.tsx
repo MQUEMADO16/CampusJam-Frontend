@@ -19,14 +19,13 @@ import {
   UserOutlined,
   EditOutlined,
   CalendarOutlined,
-  ClockCircleOutlined,
   EnvironmentOutlined,
   CustomerServiceOutlined,
   TeamOutlined,
   CheckCircleOutlined,
   InfoCircleOutlined,
   MinusCircleOutlined,
-  CheckOutlined, // Added for "Added" state
+  CheckOutlined
 } from '@ant-design/icons';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
@@ -41,27 +40,15 @@ import { TSession, TUser } from '../../types';
 import AccessDenied from '../AccessDenied';
 import NotFound from '../NotFound';
 
-const isGoogleLinked = (user: TUser | null): boolean => {
-  return (user as any)?.isGoogleLinked || false;
-};
-
 const { Title, Text, Paragraph } = Typography;
 
-/**
- * Renders a colored tag based on the session status.
- */
 const StatusTag: React.FC<{ status: TSession['status'] }> = ({ status }) => {
   switch (status) {
-    case 'Scheduled':
-      return <Tag color="blue">{status}</Tag>;
-    case 'Ongoing':
-      return <Tag color="green">{status}</Tag>;
-    case 'Finished':
-      return <Tag color="default">{status}</Tag>;
-    case 'Cancelled':
-      return <Tag color="red">{status}</Tag>;
-    default:
-      return <Tag>{status}</Tag>;
+    case 'Scheduled': return <Tag color="blue">{status}</Tag>;
+    case 'Ongoing': return <Tag color="green">{status}</Tag>;
+    case 'Finished': return <Tag color="default">{status}</Tag>;
+    case 'Cancelled': return <Tag color="red">{status}</Tag>;
+    default: return <Tag>{status}</Tag>;
   }
 };
 
@@ -82,40 +69,32 @@ const SessionDetail: React.FC = () => {
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
   
+  // --- New Calendar States ---
   const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
-  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarCheckLoading, setCalendarCheckLoading] = useState(false);
 
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
   // --- Data Fetching Effect ---
+  // Note: removed 'session' and 'isLoading' from dependency array to prevent infinite loop
   const fetchSession = useCallback(async () => {
     if (!sessionId) {
       setErrorType('404');
       return;
     }
-    // We only set the main page loader on the *initial* fetch
-    // or if the session state hasn't been set yet.
-    if (isLoading || !session) setIsLoading(true);
+    
+    // Only set loading true if we don't have data yet (prevents UI flash on refresh)
+    setIsLoading(prev => !session ? true : prev);
     
     try {
       setErrorType(null);
       const response = await sessionService.getSessionById(sessionId);
-
-      // --- DEBUGGING STEP ---
-      // Log the raw data to the browser console *before* you type it
-      console.log('RAW SESSION DATA:', response.data);
-      console.log('RAW ATTENDEES ARRAY:', response.data.attendees);
-      // ---
-
       setSession(response.data as any as TPopulatedSession);
     } catch (error) {
       if (isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          setErrorType('404');
-        } else {
-          setErrorType('403');
-        }
+        if (error.response?.status === 404) setErrorType('404');
+        else setErrorType('403');
       } else {
         setErrorType('403');
       }
@@ -123,49 +102,68 @@ const SessionDetail: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, isLoading, session]); // Re-added isLoading and session
+  }, [sessionId]); 
 
   useEffect(() => {
     fetchSession();
-  }, [fetchSession, sessionId]); // Changed to depend on fetchSession
+  }, [fetchSession]);
 
-  // --- Calendar Check Effect ---
   useEffect(() => {
-    const checkCalendar = async () => {
-      // Only run if user is logged in, has google linked, and session is loaded
-      if (!currentUser || !isGoogleLinked(currentUser) || !session) return;
+    const checkCalendarStatus = async () => {
+      if (!session || !currentUser) return;
       
-      // Only check if user is attending
-      const isAttending = session.attendees.some(a => a._id === currentUser._id);
-      if (!isAttending) {
-        setIsAddedToCalendar(false);
-        return;
-      }
+      setCalendarCheckLoading(true);
 
       try {
-        setCalendarLoading(true);
-        // Fetch user's calendar events
-        const response = await (calendarService as any).getMyEvents(); 
+        const rawResponse = await calendarService.getCalendarEvents();
         
-        // Check if current session title is in the events
-        // Ideally we'd match by ID, but title/time is a decent fallback if ID isn't stored
-        const events = response.data.events || []; // Assuming response structure
-        const found = events.some((e: any) => 
-          e.summary === session.title && 
-          new Date(e.start.dateTime).getTime() === new Date(session.startTime).getTime()
-        );
+        // FIX: Check if rawResponse is ALREADY the array, or if it's inside .data
+        const events = Array.isArray(rawResponse) ? rawResponse : (rawResponse.data || []);
         
-        setIsAddedToCalendar(found);
+        // Debugging to confirm the fix
+        console.group('🔍 CALENDAR DEBUGGER');
+        console.log('Raw API Response:', rawResponse);
+        console.log('Final Events List:', events); // This should now show 2 items!
+
+        const sessionTime = new Date(session.startTime).getTime();
+        const sessionTitle = session.title.trim().toLowerCase();
+
+        const isAlreadyAdded = events.some((event: any) => {
+          // Safety check: ensure event has start time
+          const eventTimeStr = event.start?.dateTime || event.start?.date;
+          if (!eventTimeStr) return false;
+
+          const eventTime = new Date(eventTimeStr).getTime();
+          const eventTitle = (event.summary || '').trim().toLowerCase();
+          
+          // Match Logic: 5 minute buffer (300,000ms)
+          const timeDiff = Math.abs(eventTime - sessionTime);
+          const isTimeMatch = timeDiff < 300000; 
+          const isTitleMatch = eventTitle === sessionTitle;
+
+          // Log potential matches for debugging
+          if (timeDiff < 86400000) { // Same day
+             console.log(`Checking candidate: "${eventTitle}" vs "${sessionTitle}"`, { isTimeMatch, isTitleMatch, timeDiff });
+          }
+
+          return isTitleMatch && isTimeMatch;
+        });
+
+        console.log(`✅ MATCH FOUND? ${isAlreadyAdded}`);
+        console.groupEnd();
+
+        setIsAddedToCalendar(isAlreadyAdded);
       } catch (err) {
-        console.error("Failed to check calendar status", err);
+        console.error("Failed to check calendar status:", err);
+        setIsAddedToCalendar(false);
       } finally {
-        setCalendarLoading(false);
+        setCalendarCheckLoading(false);
       }
     };
 
-    checkCalendar();
-  }, [currentUser, session]);
-
+    checkCalendarStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?._id, currentUser?._id]);
 
   // --- Button Handlers ---
   const handleJoinSession = () => {
@@ -185,7 +183,6 @@ const SessionDetail: React.FC = () => {
           await fetchSession();
         } catch (err) {
           messageApi.error("Failed to join session. You may already be an attendee.");
-          console.error(err);
         } finally {
           setJoinLoading(false);
         }
@@ -207,11 +204,9 @@ const SessionDetail: React.FC = () => {
         try {
           await sessionService.removeUserFromSession(session._id, currentUser._id);
           messageApi.info("You've left the session.");
-          setIsAddedToCalendar(false); // Reset calendar status on leave
           await fetchSession();
         } catch (err) {
           messageApi.error("Failed to leave session.");
-          console.error(err);
         } finally {
           setJoinLoading(false);
         }
@@ -219,35 +214,31 @@ const SessionDetail: React.FC = () => {
     });
   };
 
+  const handleAddToCalendar = async () => {
+    if (!session) return;
 
-const handleAddToCalendar = async () => {
-    if (!session) {
-      messageApi.error('Session data not loaded yet.'); 
-      return;
-    }
-
-    messageApi.loading('Adding to your calendar...', 0); 
+    // Optimistic UI Update
+    setIsAddedToCalendar(true);
+    messageApi.loading({ content: 'Adding to your calendar...', key: 'calAdd' }); 
 
     try {
-      const response = await calendarService.addSessionToCalendar(session._id);
-      
-      messageApi.destroy(); 
-      messageApi.success(response.message); 
-      setIsAddedToCalendar(true); // Update state to show "Added"
-
+      await calendarService.addSessionToCalendar(session._id);
+      messageApi.success({ content: 'Added to Google Calendar!', key: 'calAdd' }); 
     } catch (err: any) {
-      messageApi.destroy(); 
+      // Revert if failed
+      setIsAddedToCalendar(false);
+      
       let msg = 'Failed to add event.';
       if (err.response?.data?.message) {
         msg = err.response.data.message;
       }
-      messageApi.error(msg); 
+      messageApi.error({ content: msg, key: 'calAdd' }); 
     }
   };
 
   // --- Render Logic ---
 
-  if (authIsLoading || isLoading) {
+  if (authIsLoading || (!session && isLoading)) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
         <Spin size="large" />
@@ -264,8 +255,6 @@ const handleAddToCalendar = async () => {
   const isAttending = session.attendees.some(
     (attendee) => attendee._id === currentUser?._id
   );
-
-  const showCalendarButton = !isHost && isAttending && isGoogleLinked(currentUser);
 
   return (
     <>
@@ -310,14 +299,16 @@ const handleAddToCalendar = async () => {
                     </Button>
                   )}
                   
-                  {/* --- Calendar Button Condition --- */}
-                  {showCalendarButton && (
+                  {/* Calendar Button Logic */}
+                  {!isHost && (
                     <Button 
                       icon={isAddedToCalendar ? <CheckOutlined /> : <CalendarOutlined />} 
-                      onClick={isAddedToCalendar ? undefined : handleAddToCalendar}
-                      disabled={isAddedToCalendar || calendarLoading}
+                      onClick={handleAddToCalendar}
+                      // Disable if added OR currently checking
+                      disabled={isAddedToCalendar || calendarCheckLoading}
+                      loading={calendarCheckLoading && !isAddedToCalendar} 
                     >
-                      {isAddedToCalendar ? 'Added to Calendar' : 'Add to Calendar'}
+                      {calendarCheckLoading ? 'Checking...' : (isAddedToCalendar ? 'Added to Calendar' : 'Add to Calendar')}
                     </Button>
                   )}
                 </Space>
