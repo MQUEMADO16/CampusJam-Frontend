@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  CustomerServiceOutlined,
-  UserOutlined,
-  TeamOutlined,
-  PlusOutlined,
+  CustomerServiceOutlined, 
+  UserOutlined, 
+  TeamOutlined, 
+  PlusOutlined, 
+  MessageOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
 import WelcomeModal from '../features/WelcomeModal'; 
@@ -15,6 +18,11 @@ import { useAuth } from '../../context/auth.context';
 
 const { Content, Sider } = Layout;
 const { useBreakpoint } = Grid;
+
+const PURPLE_LIGHT = '#59428a';   // soft top gradient
+const PURPLE_DARK = '#3b275f';    // dark bottom gradient
+const PURPLE_ACCENT = '#7f4de0';  // for hovers, highlights
+const BRAND_PINK = '#D10A50';     // accent color
 
 const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -65,6 +73,11 @@ const DashboardLayout: React.FC = () => {
       icon: <TeamOutlined />,
       label: 'My Connections',
     },
+    {
+      key: '/messages', 
+      icon: <MessageOutlined />,
+      label: 'Messages',
+    },
   ];
 
   return (
@@ -73,12 +86,29 @@ const DashboardLayout: React.FC = () => {
 
       <Layout style={{ marginTop: 64 }}>
         <Sider
-          theme="light"
+          theme="dark"
           collapsible
           collapsed={collapsed}
           onCollapse={(value) => setCollapsed(value)}
           breakpoint="lg"
           collapsedWidth={screens.lg ? 80 : 0}
+          width={220}
+          trigger={
+            <div
+              style={{
+                background: PURPLE_DARK,
+                height: '100%',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px',
+                color: '#fff',
+              }}
+            >
+              {collapsed ? <RightOutlined /> : <LeftOutlined />}
+            </div>
+          }
           style={{
             height: 'calc(100vh - 64px)',
             position: 'fixed',
@@ -86,20 +116,33 @@ const DashboardLayout: React.FC = () => {
             top: 64,
             bottom: 0,
             zIndex: 1,
+            background: `linear-gradient(to bottom, ${PURPLE_LIGHT}, ${PURPLE_DARK})`,
+            boxShadow: '2px 0 8px rgba(29, 35, 41, 0.05)',
             borderRight: '1px solid #f0f0f0',
           }}
         >
-          <div style={{ padding: '16px' }}>
+          <div style={{ padding: '24px 16px 16px 16px' }}>
             <Button
               type="primary"
               block
               icon={<PlusOutlined />}
               onClick={() => navigate('/sessions/create')}
               style={{
-                background: 'linear-gradient(to right, #D10A50, #402579)',
-                borderColor: 'transparent',
+                background: `linear-gradient(135deg, ${BRAND_PINK}, ${PURPLE_ACCENT})`,
+                border: 'none',
                 fontWeight: 600,
-                overflow: 'hidden',
+                                color: '#fff',
+                borderRadius: 8,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                transition: 'all 0.25s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 14px rgba(0,0,0,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
               }}
             >
               {!collapsed && 'Create Session'}
@@ -110,20 +153,27 @@ const DashboardLayout: React.FC = () => {
             theme={{
               components: {
                 Menu: {
-                  itemHeight: 56,
-                  itemMarginBlock: 8,
+                  itemHeight: 50,
+                  itemMarginBlock: 6,
+                  darkItemBg: 'transparent',
+                  darkItemColor: 'rgba(255,255,255,0.75)',
+                  darkItemHoverColor: '#fff',
+                  darkItemSelectedColor: '#fff',
+                  darkItemSelectedBg: 'rgb(224, 58, 144,0.75)',
+                  horizontalItemHoverBg: PURPLE_ACCENT,
                 },
               },
             }}
           >
             <Menu
-              theme="light"
+              theme="dark"
               mode="inline"
               selectedKeys={[location.pathname]}
               onClick={({ key }) => navigate(key)}
               items={sidebarItems}
               style={{
-                marginTop: '0px',
+                marginTop: 8,
+                background: 'transparent',
                 borderRight: 'none',
               }}
             />
@@ -132,7 +182,7 @@ const DashboardLayout: React.FC = () => {
 
         <Layout
           style={{
-            marginLeft: collapsed ? (screens.lg ? 80 : 0) : 200,
+            marginLeft: collapsed ? (screens.lg ? 80 : 0) : 220,
             transition: 'margin-left 0.2s',
           }}
         >
