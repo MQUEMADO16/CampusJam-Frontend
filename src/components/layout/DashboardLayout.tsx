@@ -96,7 +96,7 @@ const DashboardLayout: React.FC = () => {
           trigger={
             <div
               style={{
-                background: PURPLE_DARK,
+                background: '#3e2963',
                 height: '100%',
                 width: '100%',
                 display: 'flex',
@@ -118,7 +118,6 @@ const DashboardLayout: React.FC = () => {
             zIndex: 1,
             background: `linear-gradient(to bottom, ${PURPLE_LIGHT}, ${PURPLE_DARK})`,
             boxShadow: '2px 0 8px rgba(29, 35, 41, 0.05)',
-            borderRight: '1px solid #f0f0f0',
           }}
         >
           <div style={{ padding: '24px 16px 16px 16px' }}>
@@ -131,7 +130,7 @@ const DashboardLayout: React.FC = () => {
                 background: `linear-gradient(135deg, ${BRAND_PINK}, ${PURPLE_ACCENT})`,
                 border: 'none',
                 fontWeight: 600,
-                                color: '#fff',
+                color: '#fff',
                 borderRadius: 8,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                 transition: 'all 0.25s ease',

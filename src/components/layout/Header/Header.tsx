@@ -308,7 +308,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           position: 'fixed',
           width: '100%',
           zIndex: 10,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
           padding: '0 24px'
         }}
       >
