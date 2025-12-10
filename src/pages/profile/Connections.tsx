@@ -37,14 +37,16 @@ const Connections: React.FC = () => {
   const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
   const navigate = useNavigate();
 
+  // State for "My Network" Tab
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [friendsError, setFriendsError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+  // State for "Find Musicians" Tab 
   const [searchResults, setSearchResults] = useState<TUser[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchHasRun, setSearchHasRun] = useState(false); // To show "No results" only after search
+  const [searchHasRun, setSearchHasRun] = useState(false);
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -60,9 +62,7 @@ const Connections: React.FC = () => {
         setLoadingFriends(true);
         setFriendsError(null);
         
-        // This endpoint returns { friends: [...] }
         const response = await userService.getFriends(currentUser._id);
-        // Cast or map the response to ensure it matches the Friend type
         setFriends((response.data.friends as unknown as Friend[]) || []); 
 
       } catch (err) {
@@ -86,7 +86,6 @@ const Connections: React.FC = () => {
     try {
       const response = await userService.removeFriend(currentUser._id, friendId);
       
-      // Update AuthContext
       if (response.data.user && token) {
         login(response.data.user, token);
       }
@@ -107,7 +106,6 @@ const Connections: React.FC = () => {
     try {
       const response = await userService.addFriend(currentUser._id, targetUser._id);
       
-      // Update AuthContext
       if (response.data.user && token) {
         login(response.data.user, token);
       }
@@ -198,7 +196,6 @@ const Connections: React.FC = () => {
               description={
                 <Space direction="vertical" size={0}>
                   <Text type="secondary">{friend.email}</Text>
-                  {/* Show summary of skills if available */}
                   {friend.profile?.instruments && friend.profile.instruments.length > 0 && (
                     <div style={{ marginTop: 4 }}>
                       {friend.profile.instruments.slice(0, 3).map(inst => (
@@ -238,6 +235,14 @@ const Connections: React.FC = () => {
           return (
             <List.Item
               actions={[
+                <Button 
+                  key="message"
+                  type="primary" // Keep default style to not distract from primary 'Follow'
+                  icon={<MessageOutlined />}
+                  onClick={() => navigate(`/messages/${user._id}`)}
+                >
+                  Message
+                </Button>,
                 alreadyFriend ? (
                   <Button disabled>Following</Button>
                 ) : (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Card,
   Input,
@@ -212,24 +212,29 @@ const Chat: React.FC = () => {
         <div style={{ marginBottom: '16px', borderBottom: '1px solid #f0f0f0', paddingBottom: '16px' }}>
           <Row align="middle" gutter={16}>
             <Col>
-              <Button 
-                type="text" 
-                icon={<ArrowLeftOutlined />} 
-                onClick={() => navigate('/messages')} 
-              />
-            </Col>
-            <Col>
-              <Avatar size={40} icon={<UserOutlined />} />
-            </Col>
-            <Col>
-              <Title level={4} style={{ margin: 0 }}>
-                {otherUser.name}
-              </Title>
-              {otherUser.profile?.skillLevel && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {otherUser.profile.skillLevel} Musician
-                </Text>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <Button 
+                  type="text" 
+                  icon={<ArrowLeftOutlined />} 
+                  onClick={() => navigate('/messages')} 
+                />
+                <Link to={`/profile/${otherUser._id}`}>
+                  <Avatar size={40} icon={<UserOutlined />} />
+                </Link>
+                <div>
+                  {/* Name is now a clickable link */}
+                  <Link to={`/profile/${otherUser._id}`} style={{ color: 'inherit' }}>
+                    <Title level={4} style={{ margin: 0, lineHeight: 1.2 }}>
+                      {otherUser.name}
+                    </Title>
+                  </Link>
+                  {otherUser.profile?.skillLevel && (
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {otherUser.profile.skillLevel} Musician
+                    </Text>
+                  )}
+                </div>
+              </div>
             </Col>
           </Row>
         </div>

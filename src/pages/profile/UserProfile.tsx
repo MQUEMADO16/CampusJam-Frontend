@@ -17,8 +17,10 @@ import {
   EditOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
+  MessageOutlined,
+  ArrowLeftOutlined, // Import Back Arrow Icon
 } from '@ant-design/icons';
-import { Link, useParams,} from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 
 import { userService } from '../../services/user.service';
@@ -32,6 +34,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const UserProfile: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   
   const { user: currentUser, isLoading: authIsLoading, login, token } = useAuth();
   
@@ -145,6 +148,18 @@ const UserProfile: React.FC = () => {
     <Row justify="center" style={{ padding: '24px 0' }}>
       <Col xs={24} md={20} lg={16} xl={12}>
         <Card style={{ width: '100%', borderRadius: '16px' }}>
+          
+          {/* --- Back Button --- */}
+          <div style={{ marginBottom: '16px' }}>
+            <Button 
+              type="text" 
+              icon={<ArrowLeftOutlined />} 
+              onClick={() => navigate(-1)} // Navigate back in history
+            >
+              Back
+            </Button>
+          </div>
+
           {/* --- Profile Header --- */}
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm="auto">
@@ -157,10 +172,10 @@ const UserProfile: React.FC = () => {
               flex="auto"
               style={{
                 display: 'flex',
-                justifyContent: 'space-between', // Pushes children to ends
-                alignItems: 'center',           // Vertically centers them
-                flexWrap: 'wrap',                // Allows button to wrap on small screens
-                gap: '16px',                     // Adds a gap
+                justifyContent: 'space-between', 
+                alignItems: 'center',           
+                flexWrap: 'wrap',                
+                gap: '16px',                     
               }}
             >
               <div>
@@ -185,25 +200,34 @@ const UserProfile: React.FC = () => {
                   </Link>
                 ) : currentUser ? ( 
                   // User is logged in AND viewing someone else's profile
-                  isFriend ? (
+                  <Space>
                     <Button
-                      danger
-                      icon={<UserDeleteOutlined />}
-                      onClick={handleRemoveFriend}
-                      loading={friendLoading}
+                      icon={<MessageOutlined />}
+                      onClick={() => navigate(`/messages/${profileUser._id}`)}
                     >
-                      Unfollow
+                      Message
                     </Button>
-                  ) : (
-                    <Button
-                      type="primary"
-                      icon={<UserAddOutlined />}
-                      onClick={handleAddFriend}
-                      loading={friendLoading}
-                    >
-                      Follow
-                    </Button>
-                  )
+                    
+                    {isFriend ? (
+                      <Button
+                        danger
+                        icon={<UserDeleteOutlined />}
+                        onClick={handleRemoveFriend}
+                        loading={friendLoading}
+                      >
+                        Unfollow
+                      </Button>
+                    ) : (
+                      <Button
+                        type="primary"
+                        icon={<UserAddOutlined />}
+                        onClick={handleAddFriend}
+                        loading={friendLoading}
+                      >
+                        Follow
+                      </Button>
+                    )}
+                  </Space>
                 ) : null /* User is logged out, show no button */ }
               </div>
             </Col>

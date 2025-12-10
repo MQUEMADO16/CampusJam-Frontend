@@ -193,11 +193,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
         locale={{ emptyText: <div style={{ padding: '16px', textAlign: 'center' }}><Text type="secondary">No notifications</Text></div> }}
         style={{ maxHeight: '300px', overflowY: 'auto' }}
       />
-      
-      {/* Note: Ensure you have a /notifications route if you keep this button, otherwise remove it */}
-      <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0' }}>
-        <Button type="link" size="small" onClick={() => navigate('/notifications')}>View all</Button>
-      </div>
     </Card>
   );
 
