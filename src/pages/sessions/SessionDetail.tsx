@@ -77,7 +77,6 @@ const SessionDetail: React.FC = () => {
   const [messageApi, messageContextHolder] = message.useMessage();
 
   // --- Data Fetching Effect ---
-  // Note: removed 'session' and 'isLoading' from dependency array to prevent infinite loop
   const fetchSession = useCallback(async () => {
     if (!sessionId) {
       setErrorType('404');
@@ -108,6 +107,7 @@ const SessionDetail: React.FC = () => {
     fetchSession();
   }, [fetchSession]);
 
+  // --- Check Calendar Status ---
   useEffect(() => {
     const checkCalendarStatus = async () => {
       if (!session || !currentUser) return;
@@ -117,14 +117,9 @@ const SessionDetail: React.FC = () => {
       try {
         const rawResponse = await calendarService.getCalendarEvents();
         
-        // FIX: Check if rawResponse is ALREADY the array, or if it's inside .data
+        // Handle wrapped vs raw array response
         const events = Array.isArray(rawResponse) ? rawResponse : (rawResponse.data || []);
         
-        // Debugging to confirm the fix
-        console.group('🔍 CALENDAR DEBUGGER');
-        console.log('Raw API Response:', rawResponse);
-        console.log('Final Events List:', events); // This should now show 2 items!
-
         const sessionTime = new Date(session.startTime).getTime();
         const sessionTitle = session.title.trim().toLowerCase();
 
@@ -136,21 +131,13 @@ const SessionDetail: React.FC = () => {
           const eventTime = new Date(eventTimeStr).getTime();
           const eventTitle = (event.summary || '').trim().toLowerCase();
           
-          // Match Logic: 5 minute buffer (300,000ms)
+          // Match Logic: 5 minute buffer (300,000ms) to account for slight drifts
           const timeDiff = Math.abs(eventTime - sessionTime);
           const isTimeMatch = timeDiff < 300000; 
           const isTitleMatch = eventTitle === sessionTitle;
 
-          // Log potential matches for debugging
-          if (timeDiff < 86400000) { // Same day
-             console.log(`Checking candidate: "${eventTitle}" vs "${sessionTitle}"`, { isTimeMatch, isTitleMatch, timeDiff });
-          }
-
           return isTitleMatch && isTimeMatch;
         });
-
-        console.log(`✅ MATCH FOUND? ${isAlreadyAdded}`);
-        console.groupEnd();
 
         setIsAddedToCalendar(isAlreadyAdded);
       } catch (err) {
@@ -299,8 +286,8 @@ const SessionDetail: React.FC = () => {
                     </Button>
                   )}
                   
-                  {/* Calendar Button Logic */}
-                  {!isHost && (
+                  {/* Calendar Button: Render if Host OR Attending */}
+                  {(isHost || isAttending) && (
                     <Button 
                       icon={isAddedToCalendar ? <CheckOutlined /> : <CalendarOutlined />} 
                       onClick={handleAddToCalendar}
