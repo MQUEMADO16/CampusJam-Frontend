@@ -241,24 +241,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
       >
         {[
           {
-            key: 'settings',
-            label: 'Settings & Privacy',
-            icon: <SettingOutlined />,
-            onClick: handleSettingsClick,
-          },
-          {
-            key: 'help',
-            label: 'Help & Support',
-            icon: <QuestionCircleOutlined />,
-            onClick: handleHelpClick,
-          },
-          {
-            key: 'display',
-            label: 'Display & Accessibility',
-            icon: <BulbOutlined />,
-            onClick: handleDisplayClick,
-          },
-          {
             key: 'logout',
             label: 'Log Out',
             icon: <LogoutOutlined />,

@@ -9,6 +9,8 @@ import {
   Alert,
   Empty,
   Badge,
+  Row,
+  Col,
 } from 'antd';
 import { UserOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
@@ -46,6 +48,32 @@ const Messages: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { socket } = useSocket(); // Use global socket
+
+  const handleConversationClick = async (otherUserId: string) => {
+    // Optimistically mark as read in UI
+    setConversations((prev) => 
+      prev.map((conv) => {
+        if (conv.otherUser._id === otherUserId) {
+          return {
+            ...conv,
+            lastMessage: { ...conv.lastMessage, read: true }
+          };
+        }
+        return conv;
+      })
+    );
+
+    // Navigate immediately
+    navigate(`/messages/${otherUserId}`);
+
+    // API Call in background
+    try {
+      await messageService.markAsRead(otherUserId);
+    } catch (error) {
+      console.error('Failed to mark messages as read:', error);
+      // Suppress error from user since they are already in the chat
+    }
+  };
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -106,7 +134,6 @@ const Messages: React.FC = () => {
           updatedConvos.unshift(conversation);
         } else {
           // New conversation
-          // newMessage.sender should be a populated user object from the backend
           const senderObj = newMessage.sender; 
           
           if (typeof senderObj === 'object') {
@@ -169,10 +196,16 @@ const Messages: React.FC = () => {
 
   return (
     <Card style={{ borderRadius: '16px', minHeight: '80vh' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={2} style={{ margin: 0, marginBottom: '16px' }}>
-          Messages
-        </Title>
+      
+      <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
+        <Col>
+          <Title level={2} style={{ margin: 0 }}>
+            Messages
+          </Title>
+        </Col>
+      </Row>
+
+      <Card style={{ marginBottom: '24px', border: 'none', boxShadow: 'none', background: '#fafafa' }}>
         <Input
           placeholder="Search conversations by name..."
           prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
@@ -180,8 +213,9 @@ const Messages: React.FC = () => {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           allowClear
+          style={{ width: '100%' }}
         />
-      </div>
+      </Card>
 
       <List
         itemLayout="horizontal"
@@ -203,20 +237,15 @@ const Messages: React.FC = () => {
 
           return (
             <List.Item
-              actions={[
-                <Link to={`/messages/${item.otherUser._id}`} key="reply">
-                  Reply
-                </Link>
-              ]}
               style={{
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',
-                padding: '20px 24px', // Increased padding for larger look
-                borderRadius: '16px', // Increased border radius
-                backgroundColor: isUnread ? '#f0f5ff' : 'transparent', // Light blue background if unread
+                padding: '20px 24px',
+                borderRadius: '16px',
+                backgroundColor: isUnread ? '#f0f5ff' : 'transparent',
               }}
               className="message-list-item"
-              onClick={() => navigate(`/messages/${item.otherUser._id}`)}
+              onClick={() => handleConversationClick(item.otherUser._id)}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isUnread ? '#e6f7ff' : '#fafafa')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isUnread ? '#f0f5ff' : 'transparent')}
             >

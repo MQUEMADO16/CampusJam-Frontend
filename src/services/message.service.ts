@@ -43,6 +43,16 @@ export const messageService = {
     );
   },
 
+  /**
+   * Marks all messages from a specific sender as read.
+   * PUT /api/messages/dm/:senderId/read
+   */
+  markAsRead: (senderId: string) => {
+    return apiClient.put<{ message: string }>(
+      `/messages/dm/${senderId}/read`
+    );
+  },
+
   // Session messaging (Group Chat)
 
   /**

@@ -26,6 +26,7 @@ import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   MinusCircleOutlined,
+  CheckOutlined, // Added for "Added" state
 } from '@ant-design/icons';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { isAxiosError } from 'axios';
@@ -39,6 +40,10 @@ import { TSession, TUser } from '../../types';
 // --- Import Error Pages ---
 import AccessDenied from '../AccessDenied';
 import NotFound from '../NotFound';
+
+const isGoogleLinked = (user: TUser | null): boolean => {
+  return (user as any)?.isGoogleLinked || false;
+};
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -76,6 +81,10 @@ const SessionDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorType, setErrorType] = useState<'404' | '403' | null>(null);
   const [joinLoading, setJoinLoading] = useState(false);
+  
+  const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
@@ -120,6 +129,44 @@ const SessionDetail: React.FC = () => {
     fetchSession();
   }, [fetchSession, sessionId]); // Changed to depend on fetchSession
 
+  // --- Calendar Check Effect ---
+  useEffect(() => {
+    const checkCalendar = async () => {
+      // Only run if user is logged in, has google linked, and session is loaded
+      if (!currentUser || !isGoogleLinked(currentUser) || !session) return;
+      
+      // Only check if user is attending
+      const isAttending = session.attendees.some(a => a._id === currentUser._id);
+      if (!isAttending) {
+        setIsAddedToCalendar(false);
+        return;
+      }
+
+      try {
+        setCalendarLoading(true);
+        // Fetch user's calendar events
+        const response = await (calendarService as any).getMyEvents(); 
+        
+        // Check if current session title is in the events
+        // Ideally we'd match by ID, but title/time is a decent fallback if ID isn't stored
+        const events = response.data.events || []; // Assuming response structure
+        const found = events.some((e: any) => 
+          e.summary === session.title && 
+          new Date(e.start.dateTime).getTime() === new Date(session.startTime).getTime()
+        );
+        
+        setIsAddedToCalendar(found);
+      } catch (err) {
+        console.error("Failed to check calendar status", err);
+      } finally {
+        setCalendarLoading(false);
+      }
+    };
+
+    checkCalendar();
+  }, [currentUser, session]);
+
+
   // --- Button Handlers ---
   const handleJoinSession = () => {
     if (!currentUser || !session) return;
@@ -160,6 +207,7 @@ const SessionDetail: React.FC = () => {
         try {
           await sessionService.removeUserFromSession(session._id, currentUser._id);
           messageApi.info("You've left the session.");
+          setIsAddedToCalendar(false); // Reset calendar status on leave
           await fetchSession();
         } catch (err) {
           messageApi.error("Failed to leave session.");
@@ -185,6 +233,7 @@ const handleAddToCalendar = async () => {
       
       messageApi.destroy(); 
       messageApi.success(response.message); 
+      setIsAddedToCalendar(true); // Update state to show "Added"
 
     } catch (err: any) {
       messageApi.destroy(); 
@@ -215,6 +264,8 @@ const handleAddToCalendar = async () => {
   const isAttending = session.attendees.some(
     (attendee) => attendee._id === currentUser?._id
   );
+
+  const showCalendarButton = !isHost && isAttending && isGoogleLinked(currentUser);
 
   return (
     <>
@@ -258,9 +309,15 @@ const handleAddToCalendar = async () => {
                       Join Session
                     </Button>
                   )}
-                  {!isHost && (
-                    <Button icon={<CalendarOutlined />} onClick={handleAddToCalendar}>
-                      Add to Calendar
+                  
+                  {/* --- Calendar Button Condition --- */}
+                  {showCalendarButton && (
+                    <Button 
+                      icon={isAddedToCalendar ? <CheckOutlined /> : <CalendarOutlined />} 
+                      onClick={isAddedToCalendar ? undefined : handleAddToCalendar}
+                      disabled={isAddedToCalendar || calendarLoading}
+                    >
+                      {isAddedToCalendar ? 'Added to Calendar' : 'Add to Calendar'}
                     </Button>
                   )}
                 </Space>
