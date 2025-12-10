@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Layout,
   Menu,
@@ -13,19 +13,29 @@ import {
   Divider,
   Modal,
   message,
+  Badge, // Added
+  List,  // Added
 } from 'antd';
 import {
   UserOutlined,
   LogoutOutlined,
   ProfileOutlined,
-  SettingOutlined, // For Settings & Privacy
-  QuestionCircleOutlined, // For Help & Support
-  BulbOutlined, // For Display & Accessibility (or another appropriate icon)
-  RightOutlined, // For the arrow icon on menu items
+  SettingOutlined,
+  QuestionCircleOutlined,
+  BulbOutlined,
+  RightOutlined,
+  BellOutlined, // Added
 } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../../context/auth.context';
+
+// Import Notification Services
+import { 
+  getNotifications, 
+  markNotificationRead, 
+  markAllNotificationsRead 
+} from '../../../services/notification.service';
 
 import logoSrc from '../../../assets/images/campus-jam-logo.png';
 
@@ -34,31 +44,75 @@ const { Title, Text } = Typography;
 
 const ACTIVE_COLOR = '#D10A50';
 
-// Define the props for the component
 interface AppHeaderProps {
-  layout?: 'main' | 'dashboard'; // 'main' is public, 'dashboard' is logged in
+  layout?: 'main' | 'dashboard';
 }
 
-// Accept the 'layout' prop, defaulting to 'main'
 const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, logout } = useAuth();
   const logoDestination = user ? '/my-sessions' : '/';
+  
+  // --- Existing State ---
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
+  // --- New Notification State ---
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // --- 1. Notification Polling Logic ---
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      const res = await getNotifications();
+      setNotifications(res.data);
+      const unread = res.data.filter((n: any) => !n.isRead).length;
+      setUnreadCount(unread);
+    } catch (err) {
+      console.error("Failed to fetch notifications");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000); 
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // --- 2. Notification Handlers ---
+  const handleNotificationClick = async (item: any) => {
+    if (!item.isRead) {
+      await markNotificationRead(item._id);
+      fetchNotifications();
+    }
+    setIsNotifOpen(false);
+    if (item.link) {
+      navigate(item.link);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    await markAllNotificationsRead();
+    fetchNotifications();
+  };
+
+  // --- Existing Handlers ---
   const handleLogout = () => {
     modal.confirm({
       title: 'Log Out',
       content: 'Are you sure you want to log out?',
       okText: 'Log Out',
       cancelText: 'Cancel',
-      width: 400, // Adjusted width
+      width: 400,
       onOk: () => {
         navigate('/', {
-          replace: true, // Use replace to prevent going back to the logged-in state
+          replace: true,
           state: {
             alert: { type: 'success', text: 'You have been logged out.' }
           }
@@ -101,6 +155,53 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
     setIsDropdownOpen(false);
   };
 
+  // --- 3. Render Components (Notification Menu) ---
+  const notificationMenu = (
+    <Card
+      style={{ width: 320, borderRadius: 8, padding: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+      bodyStyle={{ padding: 0 }}
+    >
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text strong>Notifications</Text>
+        {unreadCount > 0 && (
+          <a onClick={handleMarkAllRead} style={{ fontSize: '12px', color: '#1677ff', cursor: 'pointer' }}>
+            Mark all read
+          </a>
+        )}
+      </div>
+      
+      <List
+        dataSource={notifications.slice(0, 5)}
+        renderItem={(item) => (
+          <List.Item 
+            onClick={() => handleNotificationClick(item)}
+            style={{ 
+              padding: '12px 16px', 
+              cursor: 'pointer',
+              background: item.isRead ? '#fff' : '#e6f7ff',
+              transition: 'background 0.2s',
+              borderBottom: '1px solid #f0f0f0'
+            }}
+          >
+            <List.Item.Meta
+              avatar={<Avatar src={item.sender?.avatarUrl} icon={<UserOutlined />} />}
+              title={<Text style={{ fontSize: '13px' }}>{item.message}</Text>}
+              description={<Text type="secondary" style={{ fontSize: '11px' }}>{new Date(item.createdAt).toLocaleDateString()}</Text>}
+            />
+          </List.Item>
+        )}
+        locale={{ emptyText: <div style={{ padding: '16px', textAlign: 'center' }}><Text type="secondary">No notifications</Text></div> }}
+        style={{ maxHeight: '300px', overflowY: 'auto' }}
+      />
+      
+      {/* Note: Ensure you have a /notifications route if you keep this button, otherwise remove it */}
+      <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #f0f0f0' }}>
+        <Button type="link" size="small" onClick={() => navigate('/notifications')}>View all</Button>
+      </div>
+    </Card>
+  );
+
+  // --- Existing Render Components (User Menu) ---
   const userDropdownOverlay = (
     <Card
       style={{
@@ -111,7 +212,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
       }}
       bodyStyle={{ padding: '0' }}
     >
-      {/* User Info Header */}
       <div
         style={{
           display: 'flex',
@@ -126,7 +226,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
         </Text>
       </div>
 
-      {/* View Profile Button */}
       <div style={{ padding: '0 16px 16px 16px' }}>
         <Button
           type="default"
@@ -140,7 +239,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
 
       <Divider style={{ margin: '0 0 8px 0' }} />
 
-      {/* Menu Items */}
       <Space
         direction="vertical"
         style={{ width: '100%', padding: '0 0 8px 0' }}
@@ -214,7 +312,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           padding: '0 24px'
         }}
       >
-        {/* Logo Section (Always visible) */}
         <Link to={logoDestination} style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '1.75rem', marginRight: '8px' }}>
             <img
@@ -236,7 +333,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           </Title>
         </Link>
 
-        {/* Conditionally render the Menu */}
         {layout === 'main' && (
           <ConfigProvider
             theme={{
@@ -247,13 +343,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
                 Menu: {
                   itemSelectedColor: ACTIVE_COLOR,
                   itemHoverColor: ACTIVE_COLOR,
-                  fontSize: 16, // Adjusted from 18px for better fit
+                  fontSize: 16,
                   itemPaddingInline: 24,
                 },
               },
             }}
           >
-            {/* Navigation Menu */}
             <Menu
               mode="horizontal"
               onClick={({ key }) => handleNavigate(key)}
@@ -269,39 +364,58 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
           </ConfigProvider>
         )}
         
-        {/* If in dashboard, add a simple spacer to keep auth buttons to the right */}
         {layout === 'dashboard' && (
           <div style={{ flex: 1 }} />
         )}
 
-        {/* Auth Buttons Section (Always visible, logic is auth-aware) */}
         <div
           style={{
             minWidth: '150px',
             display: 'flex',
             justifyContent: 'flex-end',
+            alignItems: 'center', // Aligns bell and avatar
+            gap: '24px'           // Spaces bell and avatar
           }}
         >
           {isLoading ? (
             <Spin />
           ) : user ? (
-            <Dropdown
-              overlay={userDropdownOverlay}
-              placement="bottomRight"
-              arrow
-              trigger={['click']}
-              open={isDropdownOpen}
-              onOpenChange={setIsDropdownOpen}
-              dropdownRender={(menu) => (
-                <div style={{ marginTop: '8px' }}>{menu}</div>
-              )}
-            >
-              <Avatar
-                size="large"
-                icon={<UserOutlined />}
-                style={{ cursor: 'pointer', border: '1px solid #ddd' }}
-              />
-            </Dropdown>
+            <>
+              {/* --- NEW: Notification Bell --- */}
+              <Dropdown 
+                overlay={notificationMenu} 
+                trigger={['click']} 
+                placement="bottomRight"
+                open={isNotifOpen}
+                onOpenChange={setIsNotifOpen}
+                arrow
+              >
+                <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                    <BellOutlined style={{ fontSize: '22px', color: 'rgba(0,0,0,0.65)' }} />
+                  </Badge>
+                </div>
+              </Dropdown>
+
+              {/* Existing User Profile Avatar */}
+              <Dropdown
+                overlay={userDropdownOverlay}
+                placement="bottomRight"
+                arrow
+                trigger={['click']}
+                open={isDropdownOpen}
+                onOpenChange={setIsDropdownOpen}
+                dropdownRender={(menu) => (
+                  <div style={{ marginTop: '8px' }}>{menu}</div>
+                )}
+              >
+                <Avatar
+                  size="large"
+                  icon={<UserOutlined />}
+                  style={{ cursor: 'pointer', border: '1px solid #ddd' }}
+                />
+              </Dropdown>
+            </>
           ) : (
             <Space>
               <Button onClick={() => handleNavigate('/login')}>Log In</Button>
@@ -324,4 +438,3 @@ const AppHeader: React.FC<AppHeaderProps> = ({ layout = 'main' }) => {
 };
 
 export default AppHeader;
-

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd'; 
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Grid, ConfigProvider, Button } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   CustomerServiceOutlined, 
@@ -11,6 +11,10 @@ import {
   RightOutlined,
 } from '@ant-design/icons';
 import AppHeader from './Header/Header';
+import WelcomeModal from '../features/WelcomeModal'; 
+
+// 1. Import useAuth to get the current user's ID
+import { useAuth } from '../../context/auth.context';
 
 const { Content, Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -18,8 +22,7 @@ const { useBreakpoint } = Grid;
 const PURPLE_LIGHT = '#59428a';   // soft top gradient
 const PURPLE_DARK = '#3b275f';    // dark bottom gradient
 const PURPLE_ACCENT = '#7f4de0';  // for hovers, highlights
-const BRAND_PINK = '#D10A50';     // your accent color
-
+const BRAND_PINK = '#D10A50';     // accent color
 
 const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -27,19 +30,46 @@ const DashboardLayout: React.FC = () => {
   const screens = useBreakpoint();
   const [collapsed, setCollapsed] = useState(false);
 
+  // 2. Get the user from context
+  const { user } = useAuth();
+
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  // 3. Updated Effect: Check strictly using the User's ID
+  useEffect(() => {
+    // Only proceed if we have a user (they are logged in)
+    if (user && user._id) {
+      const key = `hasSeenWelcome_${user._id}`;
+      const hasSeen = localStorage.getItem(key);
+      
+      // If this specific user hasn't seen it, show it
+      if (!hasSeen) {
+        setShowWelcome(true);
+      }
+    }
+  }, [user]); // Re-run this check whenever the user changes
+
+  // 4. Updated Close Handler: Save the key with the User's ID
+  const handleCloseWelcome = () => {
+    if (user && user._id) {
+      localStorage.setItem(`hasSeenWelcome_${user._id}`, 'true');
+    }
+    setShowWelcome(false);
+  };
+
   const sidebarItems = [
     {
-      key: '/my-sessions', 
+      key: '/my-sessions',
       icon: <UserOutlined />,
       label: 'My Sessions',
     },
     {
-      key: '/sessions', 
+      key: '/sessions',
       icon: <CustomerServiceOutlined />,
       label: 'Browse Sessions',
     },
     {
-      key: '/connections', 
+      key: '/connections',
       icon: <TeamOutlined />,
       label: 'My Connections',
     },
@@ -54,7 +84,7 @@ const DashboardLayout: React.FC = () => {
     <Layout style={{ minHeight: '100vh' }}>
       <AppHeader layout="dashboard" />
 
-      <Layout style={{ marginTop: 64 }}> 
+      <Layout style={{ marginTop: 64 }}>
         <Sider
           theme="dark"
           collapsible
@@ -88,6 +118,7 @@ const DashboardLayout: React.FC = () => {
             zIndex: 1,
             background: `linear-gradient(to bottom, ${PURPLE_LIGHT}, ${PURPLE_DARK})`,
             boxShadow: '2px 0 8px rgba(29, 35, 41, 0.05)',
+            borderRight: '1px solid #f0f0f0',
           }}
         >
           <div style={{ padding: '24px 16px 16px 16px' }}>
@@ -100,7 +131,7 @@ const DashboardLayout: React.FC = () => {
                 background: `linear-gradient(135deg, ${BRAND_PINK}, ${PURPLE_ACCENT})`,
                 border: 'none',
                 fontWeight: 600,
-                color: '#fff',
+                                color: '#fff',
                 borderRadius: 8,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
                 transition: 'all 0.25s ease',
@@ -151,9 +182,8 @@ const DashboardLayout: React.FC = () => {
 
         <Layout
           style={{
-            marginLeft: collapsed ? (screens.lg ? 80 : 0) : 220, 
+            marginLeft: collapsed ? (screens.lg ? 80 : 0) : 220,
             transition: 'margin-left 0.2s',
-            background: '#f5f7fa', 
           }}
         >
           <Content style={{ padding: '24px 48px 0' }}>
@@ -161,6 +191,12 @@ const DashboardLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
+
+      <WelcomeModal 
+        isOpen={showWelcome} 
+        onClose={handleCloseWelcome} 
+      />
+
     </Layout>
   );
 };
